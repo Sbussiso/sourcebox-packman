@@ -118,7 +118,7 @@
                                                                       </div>
                                                                     </div>
                                                                     <br/>
-                                                                    <button type="button" class="btn btn-primary">Publish to Pack</button>`;
+                                                                    <button type="button" class="btn btn-primary" onclick="openAccordionTwo()">Publish to Pack</button>`;
                 alert(data.message);
             } else {
                 document.getElementById('previewText').innerHTML = 'No data to preview';
@@ -144,7 +144,8 @@
         .then(response => response.json())
         .then(data => {
             if (data.message === 'File uploaded successfully') {
-                document.getElementById('previewText').innerHTML = `<p>Data preview: ${data.filename}</p>`;
+                document.getElementById('previewText').innerHTML = `<p>Data preview: ${data.filename}</p>
+                                                                    <button type="button" class="btn btn-primary" onclick="openAccordionTwo()">Publish to Pack</button>`;
                 alert(data.message);
             } else {
                 document.getElementById('previewText').innerHTML = 'No data to preview';
@@ -156,6 +157,18 @@
             console.error('Error:', error);
             alert('Failed to upload file');
         });
+    }
+
+    function openAccordionTwo() {
+        const collapseOne = new bootstrap.Collapse(document.getElementById('collapseOne'), {
+            toggle: false
+        });
+        collapseOne.show();
+        
+        const collapseTwo = new bootstrap.Collapse(document.getElementById('collapseTwo'), {
+            toggle: false
+        });
+        collapseTwo.show();
     }
 </script>
 {% endblock %}
