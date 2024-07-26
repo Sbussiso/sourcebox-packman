@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}PackMan{% endblock %}
+{% block content %}
+<header class="bg-primary text-white text-center py-3">
+    <h1>Pack Panel</h1>
+</header>
+<br/>
+<br/>
+<div class="container">
+    <div class="accordion" id="accordionExample">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+              Step 1. Data
+            </button>
+          </h2>
+          <br/>
+          <p align="center">No Packs Found</p>
+          <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
+            <div class="accordion-body">
+              <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  Dropdown button
+                </button>
+                <ul class="dropdown-menu">
+                  <li><a class="dropdown-item" href="#" onclick="showMessage('file')">File</a></li>
+                  <li><a class="dropdown-item" href="#" onclick="showMessage('webpage')">Webpage</a></li>
+                </ul>
+              </div>
+              <div id="message" class="mt-3"></div>
+            </div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+              Accordion Item #2
+            </button>
+          </h2>
+          <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+            <div class="accordion-body">
+              <strong>This is the second item's accordion body.</strong> It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
+            </div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+              Accordion Item #3
+            </button>
+          </h2>
+          <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+            <div class="accordion-body">
+              <strong>This is the third item's accordion body.</strong> It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
+            </div>
+          </div>
+        </div>
+    </div>
+</div>
+<script>
+    function showMessage(type) {
+        const messageDiv = document.getElementById('message');
+        if (type === 'file') {
+            messageDiv.innerHTML = `
+                <p class="text-danger">You are about to add a file.</p>
+                <form id="fileForm" enctype="multipart/form-data" onsubmit="submitFile(event)">
+                    <input type="file" name="file" class="form-control mt-2" required>
+                    <br/>
+                    <button type="submit" class="btn btn-primary">Add Data</button>
+                </form>
+            `;
+        } else if (type === 'webpage') {
+            messageDiv.innerHTML = `
+                <p class="text-info">You are about to add a webpage.</p>
+                <form id="linkForm" onsubmit="submitLink(event)">
+                    <input type="url" name="link" class="form-control mt-2" placeholder="Enter web link" required>
+                    <br/>
+                    <button type="submit" class="btn btn-primary">Add Data</button>
+                </form>
+            `;
+        }
+    }
+
+    function submitFile(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+
+        fetch('/packman/file_pack', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+
+    function submitLink(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+
+        fetch('/packman/web_pack', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+</script>
+{% endblock %}

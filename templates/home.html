@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<h1 class="my-4">Welcome</h1>
+
+{% if 'access_token' not in session %}
+    <a href="{{ url_for('register') }}" class="btn btn-primary">Register</a>
+    <a href="{{ url_for('login') }}" class="btn btn-secondary">Login</a>
+{% endif %}
+
+{% if 'access_token' in session %}
+    <div class="container">
+        <br/>
+        <br/>
+        <h2>Available Packs</h2>
+        <br/>
+        <p>user pack list here</p>
+        <br/>
+        <a href="/packman" class="btn btn-primary">Add Pack</a>
+    </div>
+{% endif %}
+
+{% endblock %}
