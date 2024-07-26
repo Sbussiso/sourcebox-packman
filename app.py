@@ -88,27 +88,19 @@ def packman():
 def web_pack():
     token = session.get('access_token')
     link = request.form.get('link')
-    if not link:
-        return jsonify({'message': 'Link not provided'}), 400
+    pack_name = request.form.get('pack_name')
+    if not link or not pack_name:
+        return jsonify({'message': 'Pack name and link are required'}), 400
 
     loader = WebBaseLoader(link)
     docs = loader.load()
 
-    docs_json = []
-    for doc in docs:
-        doc_dict = {
-            'metadata': doc.metadata,
-            'page_content': doc.page_content
-        }
-        docs_json.append(doc_dict)
+    docs_json = [{'url': doc.metadata.get('url'), 'content': doc.page_content} for doc in docs]
 
     headers = {'Authorization': f'Bearer {token}'}
-    data = {'link': link, 'docs': docs_json}
+    data = {'pack_name': pack_name, 'docs': docs_json}
     response = requests.post(f"{API_URL}/packman/web_pack", json=data, headers=headers)
     
-    print(f"Status Code: {response.status_code}")
-    print(f"Response Content: {response.content}")
-
     if response.status_code != 201:
         flash('Failed to process link', 'danger')
         return jsonify({'message': 'Failed to process link'}), 500
@@ -119,8 +111,9 @@ def web_pack():
 @app.route('/packman/file_pack', methods=['POST'])
 def file_pack():
     token = session.get('access_token')
-    if 'file' not in request.files:
-        return jsonify({'message': 'File part not provided'}), 400
+    pack_name = request.form.get('pack_name')
+    if 'file' not in request.files or not pack_name:
+        return jsonify({'message': 'Pack name and file are required'}), 400
     
     file = request.files['file']
     if file.filename == '':
@@ -134,11 +127,8 @@ def file_pack():
     file.save(filepath)
 
     headers = {'Authorization': f'Bearer {token}'}
-    data = {'filename': filename, 'filepath': filepath}
+    data = {'pack_name': pack_name, 'filename': filename, 'filepath': filepath}
     response = requests.post(f"{API_URL}/packman/file_pack", json=data, headers=headers)
-
-    print(f"Status Code: {response.status_code}")
-    print(f"Response Content: {response.content}")
 
     if response.status_code != 201:
         flash('Failed to upload file', 'danger')
