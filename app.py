@@ -87,18 +87,14 @@ def packman():
 @app.route('/packman/web_pack', methods=['POST'])
 def web_pack():
     token = session.get('access_token')
-    link = request.form.get('link')
-    pack_name = request.form.get('pack_name')
-    if not link or not pack_name:
-        return jsonify({'message': 'Pack name and link are required'}), 400
+    data = request.get_json()
 
-    loader = WebBaseLoader(link)
-    docs = loader.load()
-
-    docs_json = [{'url': doc.metadata.get('url'), 'content': doc.page_content} for doc in docs]
+    pack_name = data.get('pack_name')
+    docs = data.get('docs')
+    if not pack_name or not docs:
+        return jsonify({'message': 'Pack name and docs are required'}), 400
 
     headers = {'Authorization': f'Bearer {token}'}
-    data = {'pack_name': pack_name, 'docs': docs_json}
     response = requests.post(f"{API_URL}/packman/web_pack", json=data, headers=headers)
     
     if response.status_code != 201:
@@ -106,7 +102,7 @@ def web_pack():
         return jsonify({'message': 'Failed to process link'}), 500
 
     flash('Link processed successfully', 'success')
-    return jsonify({'message': 'Link processed successfully', 'docs': docs_json})
+    return jsonify({'message': 'Link processed successfully'})
 
 @app.route('/packman/file_pack', methods=['POST'])
 def file_pack():
@@ -136,6 +132,32 @@ def file_pack():
 
     flash('File uploaded successfully', 'success')
     return jsonify({'message': 'File uploaded successfully', 'filename': filename}), 201
+
+@app.route('/packman/preview_link', methods=['POST'])
+def preview_link():
+    link = request.json.get('link')
+    if not link:
+        return jsonify({'message': 'Link is required'}), 400
+
+    loader = WebBaseLoader(link)
+    docs = loader.load()
+
+    docs_json = [{'url': doc.metadata.get('url'), 'content': doc.page_content} for doc in docs]
+    
+    return jsonify({'message': 'Link processed successfully', 'docs': docs_json})
+
+@app.route('/packman/preview_file', methods=['POST'])
+def preview_file():
+    if 'file' not in request.files:
+        return jsonify({'message': 'File is required'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'message': 'No selected file'}), 400
+    
+    content = file.read().decode('utf-8')  # Assuming text files for simplicity
+
+    return jsonify({'message': 'File processed successfully', 'content': content})
 
 @app.route('/logout')
 def logout():
