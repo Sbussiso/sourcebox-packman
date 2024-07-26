@@ -14,8 +14,6 @@
               Step 1. Data
             </button>
           </h2>
-          <br/>
-          <p align="center">No Packs Found</p>
           <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
             <div class="accordion-body">
               <div class="dropdown">
@@ -57,6 +55,8 @@
         </div>
     </div>
 </div>
+<br/>
+<br/>
 <script>
     function showMessage(type) {
         const messageDiv = document.getElementById('message');
@@ -68,6 +68,13 @@
                     <br/>
                     <button type="submit" class="btn btn-primary">Add Data</button>
                 </form>
+                <br/>
+                <div class="container">
+                  <button type="button" class="btn">Base class</button>
+                  <br/>
+                  <!-- Content here -->
+                  <p id="previewText">No data to preview</p>
+                </div>
             `;
         } else if (type === 'webpage') {
             messageDiv.innerHTML = `
@@ -77,26 +84,13 @@
                     <br/>
                     <button type="submit" class="btn btn-primary">Add Data</button>
                 </form>
+                <br/>
+                <div class="container">
+                  <!-- Content here -->
+                  <p id="previewText">No data to preview</p>
+                </div>
             `;
         }
-    }
-
-    function submitFile(event) {
-        event.preventDefault();
-        const form = event.target;
-        const formData = new FormData(form);
-
-        fetch('/packman/file_pack', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            alert(data.message);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
     }
 
     function submitLink(event) {
@@ -110,10 +104,57 @@
         })
         .then(response => response.json())
         .then(data => {
-            alert(data.message);
+            if (data.message === 'Link processed successfully') {
+                document.getElementById('previewText').innerHTML = `<div class="accordion accordion-flush border" id="accordionFlushExample">
+                                                                      <div class="accordion-item">
+                                                                        <h2 class="accordion-header">
+                                                                          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="false" aria-controls="flush-collapseOne">
+                                                                            View/Hide Preview
+                                                                          </button>
+                                                                        </h2>
+                                                                        <div id="flush-collapseOne" class="accordion-collapse collapse" data-bs-parent="#accordionFlushExample">
+                                                                          <div class="accordion-body text-wrap">Data preview: ${JSON.stringify(data.docs)}</div>
+                                                                        </div>
+                                                                      </div>
+                                                                    </div>
+                                                                    <br/>
+                                                                    <button type="button" class="btn btn-primary">Publish to Pack</button>`;
+                alert(data.message);
+            } else {
+                document.getElementById('previewText').innerHTML = 'No data to preview';
+                alert('Failed to process link');
+            }
         })
         .catch(error => {
+            document.getElementById('previewText').innerHTML = 'No data to preview';
             console.error('Error:', error);
+            alert('Failed to process link');
+        });
+    }
+
+    function submitFile(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+
+        fetch('/packman/file_pack', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message === 'File uploaded successfully') {
+                document.getElementById('previewText').innerHTML = `<p>Data preview: ${data.filename}</p>`;
+                alert(data.message);
+            } else {
+                document.getElementById('previewText').innerHTML = 'No data to preview';
+                alert('Failed to upload file');
+            }
+        })
+        .catch(error => {
+            document.getElementById('previewText').innerHTML = 'No data to preview';
+            console.error('Error:', error);
+            alert('Failed to upload file');
         });
     }
 </script>
