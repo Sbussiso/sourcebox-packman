@@ -6,7 +6,11 @@
 </header>
 <br/>
 <br/>
+
 <div class="container">
+    <button type="button" class="btn btn-danger" id="backHome">Back</button>
+    <br/>
+    <br/>
     <div class="accordion" id="accordionExample">
         <div class="accordion-item">
             <h2 class="accordion-header">
@@ -57,8 +61,11 @@
 <br/>
 <br/>
 <script>
-    const webPackData = [];
-    const filePackData = [];
+    const packData = [];
+
+    document.getElementById('backHome').onclick = function() {
+        window.location.href = '/';
+    };
 
     function showMessage(type) {
         const messageDiv = document.getElementById('message');
@@ -107,12 +114,29 @@
         const form = event.target;
         const formData = new FormData(form);
         const link = formData.get('link');
-        const packName = formData.get('pack_name');
 
-        webPackData.push({ content: link });
-        addDataEntry('Link', link);
-        form.reset();
-        disablePackName();
+        fetch('/packman/preview_link', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ link: link })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message === 'Link processed successfully') {
+                const content = data.docs.map(doc => doc.content).join(' ');
+                packData.push({ content: content, data_type: 'link' });
+                addDataEntry('Link', link);
+                form.reset();
+                disablePackName();
+            } else {
+                console.error('Failed to fetch preview for link:', data);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
     }
 
     function submitFile(event) {
@@ -120,12 +144,15 @@
         const form = event.target;
         const fileInput = form.querySelector('input[name="file"]');
         const file = fileInput.files[0];
-        const packName = form.querySelector('input[name="pack_name"]').value;
 
-        filePackData.push({ file: file, pack_name: packName });
-        addDataEntry('File', file.name);
-        form.reset();
-        disablePackName();
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            packData.push({ content: e.target.result, data_type: 'file', filename: file.name });
+            addDataEntry('File', file.name);
+            form.reset();
+            disablePackName();
+        };
+        reader.readAsText(file);
     }
 
     function openAccordionTwo() {
@@ -141,60 +168,16 @@
         });
         document.getElementById('packagedData').innerHTML = packagedDataContent || 'No Data to pack';
 
-        // Fetch and display preview data
         fetchPreviewData();
     }
 
     function fetchPreviewData() {
         const previewDataDiv = document.getElementById('previewData');
-        previewDataDiv.innerHTML = ''; // Clear previous previews
+        previewDataDiv.innerHTML = '';
 
-        // Fetch preview data for links
-        webPackData.forEach((entry, index) => {
-            fetch('/packman/preview_link', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ link: entry.content })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message === 'Link processed successfully') {
-                    const previewContent = data.docs.map(doc => doc.content).join('<br/>');
-                    const accordionItem = createAccordionItem(`Link ${index + 1}`, previewContent);
-                    previewDataDiv.appendChild(accordionItem);
-                } else {
-                    console.error('Failed to fetch preview for link:', data);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-        });
-
-        // Fetch preview data for files
-        filePackData.forEach((entry, index) => {
-            const formData = new FormData();
-            formData.append('file', entry.file);
-
-            fetch('/packman/preview_file', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message === 'File processed successfully') {
-                    const previewContent = data.content;
-                    const accordionItem = createAccordionItem(`File ${index + 1}`, previewContent);
-                    previewDataDiv.appendChild(accordionItem);
-                } else {
-                    console.error('Failed to fetch preview for file:', data);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
+        packData.forEach((entry, index) => {
+            const accordionItem = createAccordionItem(`${entry.data_type.charAt(0).toUpperCase() + entry.data_type.slice(1)} ${index + 1}`, entry.content);
+            previewDataDiv.appendChild(accordionItem);
         });
     }
 
@@ -223,70 +206,38 @@
 
         const token = sessionStorage.getItem('access_token');
 
-        // Handle web pack data
-        if (webPackData.length > 0) {
-            fetch('/packman/web_pack', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ pack_name: packName, docs: webPackData })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message === 'Link processed successfully') {
-                    alert('Links processed successfully');
-                } else {
-                    alert('Failed to process links');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Failed to process links');
-            });
-        }
-
-        // Handle file pack data
-        const filePackPromises = filePackData.map(fileEntry => {
-            const formData = new FormData();
-            formData.append('pack_name', fileEntry.pack_name);
-            formData.append('file', fileEntry.file);
-
-            return fetch('/packman/file_pack', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message === 'File uploaded successfully') {
-                    alert(`File ${fileEntry.file.name} uploaded successfully`);
-                } else {
-                    alert(`Failed to upload file ${fileEntry.file.name}`);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert(`Failed to upload file ${fileEntry.file.name}`);
-            });
+        const contents = packData.map(entry => {
+            return {
+                content: entry.content,
+                data_type: entry.data_type,
+                filename: entry.filename
+            };
         });
 
-        Promise.all(filePackPromises)
-        .then(() => {
-            alert('All files uploaded successfully');
-            document.getElementById('dataEntries').innerHTML = '';
-            document.getElementById('packagedData').innerText = 'No Data to pack';
-            document.getElementById('packNameForm').reset();
-            document.getElementById('packName').disabled = false;
-            document.getElementById('reviewButton').style.display = 'none';
+        fetch('/packman/package_pack', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ pack_name: packName, contents: contents })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message === 'Pack processed successfully') {
+                alert('Pack processed successfully');
+            } else {
+                alert('Failed to process pack');
+            }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Failed to upload files');
+            alert('Failed to process pack');
         });
+
+        //goes home after submission
+        window.location.href = '/';
+
     }
 </script>
 {% endblock %}

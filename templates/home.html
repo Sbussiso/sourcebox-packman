@@ -16,7 +16,25 @@
         <br/>
         <h2>Available Packs</h2>
         <br/>
-        <p>user pack list here</p>
+        {% if packs %}
+            <ul class="list-group">
+                {% for pack in packs %}
+                    <li class="list-group-item">
+                        <strong>{{ pack.pack_name }}</strong>
+                        <ul>
+                            {% for link in pack.links %}
+                                <li>Link: {{ link }}</li>
+                            {% endfor %}
+                            {% for file in pack.files %}
+                                <li>File: {{ file.filename }}</li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No packs available.</p>
+        {% endif %}
         <br/>
         <a href="/packman" class="btn btn-primary">Add Pack</a>
     </div>
