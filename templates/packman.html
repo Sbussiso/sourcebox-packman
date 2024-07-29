@@ -222,22 +222,26 @@
             },
             body: JSON.stringify({ pack_name: packName, contents: contents })
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    throw new Error(err.message || 'Failed to process pack');
+                });
+            }
+            return response.json();
+        })
         .then(data => {
-            if (data.message === 'Pack processed successfully') {
-                alert('Pack processed successfully');
+            console.log('Response data:', data);
+            if (data.message) {
+                alert(data.message);
             } else {
-                alert('Failed to process pack');
+                alert('Pack processed successfully');
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            alert('Failed to process pack');
+            console.error('Error:', error.message);
+            alert(error.message || 'Failed to process pack');
         });
-
-        //goes home after submission
-        window.location.href = '/';
-
     }
 </script>
 {% endblock %}

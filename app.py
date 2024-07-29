@@ -3,16 +3,21 @@ import requests
 import os
 from langchain_community.document_loaders import WebBaseLoader
 import logging
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your_secret_key')
 app.config['UPLOAD_FOLDER'] = 'uploads'
 
-API_URL = 'https://sourcebox-central-auth-8396932a641c.herokuapp.com'
+API_URL = os.getenv('API_URL')
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
 
 def check_authentication():
     access_token = session.get('access_token')
@@ -36,11 +41,17 @@ def check_authentication():
         flash('You need to login first', 'danger')
         return False
 
+
+
+
 @app.before_request
 def before_request():
     if request.endpoint not in ('login', 'register', 'static'):
         if not check_authentication():
             return redirect(url_for('login'))
+
+
+
 
 @app.route('/')
 def home():
@@ -60,32 +71,14 @@ def home():
             flash('Error fetching packs', 'danger')
     return render_template('home.html', packs=packs)
 
+
+
+
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        username = request.form.get('username')
-        password = request.form.get('password')
+    return redirect("https://sourcebox-official-website-9f3f8ae82f0b.herokuapp.com/sign_up")
 
-        try:
-            response = requests.post(f"{API_URL}/register", json={
-                'email': email,
-                'username': username,
-                'password': password
-            })
-
-            if response.status_code == 201:
-                flash('User registered successfully!', 'success')
-                return redirect(url_for('login'))
-            else:
-                message = response.json().get('message', 'Registration failed')
-                logger.error(f"Registration failed: {message}")
-                flash(message, 'danger')
-        except requests.RequestException as e:
-            logger.error(f"Error during registration: {e}")
-            flash('Error during registration', 'danger')
-
-    return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -114,9 +107,15 @@ def login():
 
     return render_template('login.html')
 
+
+
+
 @app.route('/packman')
 def packman():
     return render_template('packman.html')
+
+
+
 
 @app.route('/packman/package_pack', methods=['POST'])
 def package_pack():
@@ -146,6 +145,9 @@ def package_pack():
         logger.error(f"Error processing pack: {e}")
         return jsonify({'message': 'Error processing pack'}), 500
 
+
+
+
 @app.route('/packman/preview_link', methods=['POST'])
 def preview_link():
     link = request.json.get('link')
@@ -163,6 +165,8 @@ def preview_link():
         logger.error(f"Error processing link: {e}")
         return jsonify({'message': 'Error processing link'}), 500
 
+
+
 @app.route('/packman/preview_file', methods=['POST'])
 def preview_file():
     if 'file' not in request.files:
@@ -179,6 +183,8 @@ def preview_file():
     except Exception as e:
         logger.error(f"Error processing file: {e}")
         return jsonify({'message': 'Error processing file'}), 500
+
+
 
 @app.route('/packman/list_packs', methods=['GET'])
 def list_packs():
@@ -203,11 +209,17 @@ def list_packs():
         flash('Error fetching packs', 'danger')
         return jsonify({'message': 'Error fetching packs'}), 500
 
+
+
+
 @app.route('/logout')
 def logout():
     session.pop('access_token', None)
     flash('Logged out successfully!', 'success')
     return redirect(url_for('home'))
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
