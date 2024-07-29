@@ -73,6 +73,44 @@ def home():
 
 
 
+@app.route('/del-pack')
+def del_pack():
+    packs = []
+    if 'access_token' in session:
+        token = session.get('access_token')
+        headers = {'Authorization': f'Bearer {token}'}
+        try:
+            response = requests.get(f"{API_URL}/packman/list_packs", headers=headers)
+            if response.status_code == 200:
+                packs = response.json()
+            else:
+                logger.error(f"Failed to fetch packs: {response.text}")
+                flash('Failed to fetch packs', 'danger')
+        except requests.RequestException as e:
+            logger.error(f"Error fetching packs: {e}")
+            flash('Error fetching packs', 'danger')
+    return render_template('del_pack.html', packs=packs)
+
+
+
+@app.route('/delete_pack/<int:pack_id>', methods=['DELETE'])
+def delete_pack(pack_id):
+    if 'access_token' not in session:
+        return jsonify({'message': 'Unauthorized'}), 401
+
+    token = session.get('access_token')
+    headers = {'Authorization': f'Bearer {token}'}
+    try:
+        response = requests.delete(f"{API_URL}/packman/pack/{pack_id}", headers=headers)
+        if response.status_code == 200:
+            return jsonify({'message': 'Pack deleted successfully'}), 200
+        else:
+            logger.error(f"Failed to delete pack: {response.text}")
+            return jsonify({'message': 'Failed to delete pack'}), response.status_code
+    except requests.RequestException as e:
+        logger.error(f"Error deleting pack: {e}")
+        return jsonify({'message': 'Error deleting pack'}), 500
+
 
 
 @app.route('/register', methods=['GET', 'POST'])

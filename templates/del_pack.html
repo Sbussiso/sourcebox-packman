@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Packs{% endblock %}
+
+{% block content %}
+<h1 class="my-4">Delete Packs</h1>
+
+{% if 'access_token' not in session %}
+    <a href="{{ url_for('register') }}" class="btn btn-primary">Register</a>
+    <a href="{{ url_for('login') }}" class="btn btn-secondary">Login</a>
+{% endif %}
+
+{% if 'access_token' in session %}
+    <div class="container">
+        <br/>
+        <br/>
+        <h2>Available Packs</h2>
+        <br/>
+        {% if packs %}
+            <ul class="list-group">
+                {% for pack in packs %}
+                    <li class="list-group-item">
+                        <strong>{{ pack.pack_name }}</strong>
+                        <button class="btn btn-danger btn-sm float-end" onclick="deletePack('{{ pack.id }}')">Delete</button>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No packs available.</p>
+        {% endif %}
+        <br/>
+        <a href="/" class="btn btn-primary">Back to Home</a>
+    </div>
+{% endif %}
+
+<script>
+    function deletePack(packId) {
+        const token = sessionStorage.getItem('access_token');
+        fetch(`/delete_pack/${packId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                response.json().then(data => {
+                    alert(data.message || 'Failed to delete pack');
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to delete pack');
+        });
+    }
+</script>
+
+{% endblock %}

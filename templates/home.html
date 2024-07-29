@@ -32,7 +32,7 @@
                                         <div class="accordion-item">
                                             <h2 class="accordion-header" id="headingContent{{ loop.index }}{{ loop.index0 }}">
                                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseContent{{ loop.index }}{{ loop.index0 }}" aria-expanded="false" aria-controls="collapseContent{{ loop.index }}{{ loop.index0 }}">
-                                                    {% if content.data_type == 'file' %}File: {{ content.filename }}{% else %}Content{% endif %}
+                                                    {% if content.data_type == 'file' %}File: {{ content.filename }}{% else %}Web Content: {% endif %}
                                                 </button>
                                             </h2>
                                             <div id="collapseContent{{ loop.index }}{{ loop.index0 }}" class="accordion-collapse collapse" aria-labelledby="headingContent{{ loop.index }}{{ loop.index0 }}" data-bs-parent="#contentAccordion{{ loop.index }}">
@@ -53,6 +53,9 @@
         {% endif %}
         <br/>
         <a href="/packman" class="btn btn-primary">Add Pack</a>
+        <a href="/del-pack" class="btn btn-danger">Delete Pack</a>
+        <br/>
+        <br/>
     </div>
 {% endif %}
 
