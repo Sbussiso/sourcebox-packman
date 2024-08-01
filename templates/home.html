@@ -4,6 +4,9 @@
 
 {% block content %}
 <h1 class="my-4">Welcome</h1>
+<br/>
+<br/>
+<button type="button" id="backHome" class="btn btn-danger">Back to Home</button>
 
 {% if 'access_token' not in session %}
     <a href="{{ url_for('register') }}" class="btn btn-primary">Register</a>
@@ -58,5 +61,10 @@
         <br/>
     </div>
 {% endif %}
+<script>
+    document.getElementById('backHome').addEventListener('click', function() {
+        window.location.href = 'https://sourcebox-official-website-9f3f8ae82f0b.herokuapp.com/landing'; // Change this to the landing page
+    });
+</script>
 
 {% endblock %}
