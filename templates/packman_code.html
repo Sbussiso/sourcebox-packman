@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% block title %}PackMan Code{% endblock %}
+{% block content %}
+<header class="bg-primary text-white text-center py-3">
+    <h1>Pack Panel</h1>
+</header>
+<br/><br/>
+
+<div class="container">
+    <button type="button" class="btn btn-danger" id="backHome">Back</button>
+    <br/><br/>
+    <div class="accordion" id="accordionExample">
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                    Step 1. Data
+                </button>
+            </h2>
+            <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
+                <div class="accordion-body">
+                    <form id="packNameForm">
+                        <label for="packName" class="form-label">Pack Name (Required)</label>
+                        <input type="text" class="form-control" id="packName" name="pack_name" aria-describedby="pack-name" required>
+                    </form>
+                    <br/>
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Choose Data Type
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="showMessage('file')">Code File</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="showMessage('github')">GitHub Code Base</a></li>
+                        </ul>
+                    </div>
+                    <br/>
+                    <!-- GitHub Link Input Form, hidden initially -->
+                    <div id="githubForm" style="display:none;">
+                        <form id="linkForm" onsubmit="handleSubmit(event)">
+                            <input type="url" id="linkInput" name="repoURL" class="form-control mt-2" placeholder="Enter GitHub repository link" required>
+                            <br/>
+                            <button type="submit" class="btn btn-primary" id="fetchButton">Fetch Repo</button>
+                            <div id="loadingSpinner" class="spinner-border" role="status" style="display:none;">
+                                <span class="sr-only"></span>
+                            </div>
+                            <button type="button" class="btn btn-secondary" id="resetButton" style="display:none;" onclick="handleReset()">Reset</button>
+                        </form>
+                    </div>
+                    <div id="message" class="mt-3"></div>
+                    <!-- Data Entries Display Area -->
+                    <div id="dataEntries" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<br/><br/>
+<script>
+    // Initialize the set to track displayed files
+    let displayedFiles = new Set();
+
+    document.getElementById('backHome').onclick = function() {
+        window.location.href = '/';
+    };
+
+    function showMessage(type) {
+        const githubForm = document.getElementById('githubForm');
+        const packNameInput = document.getElementById('packName');
+    
+        if (type === 'file') {
+            githubForm.style.display = 'none'; // Hide GitHub link input form
+            packNameInput.disabled = false; // Keep the Pack Name input field enabled
+            document.getElementById('message').innerHTML = `
+                <p class="text-danger">You are about to add a code file.</p>
+                <form id="fileForm" enctype="multipart/form-data" onsubmit="submitFile(event)">
+                    <input type="file" name="file" class="form-control mt-2" required>
+                    <input type="hidden" name="pack_name" value="${packNameInput.value}">
+                    <br/>
+                    <button type="submit" class="btn btn-primary">Add Data</button>
+                </form>
+            `;
+        } else if (type === 'github') {
+            githubForm.style.display = 'block'; // Show GitHub link input form
+            packNameInput.disabled = true; // Lock the Pack Name input field
+            document.getElementById('message').innerHTML = ''; // Clear the message area since the form is now visible
+        }
+    }
+
+    function addDataEntry(type, value) {
+        const dataEntries = document.getElementById('dataEntries');
+        
+        // Check if the value is already in the displayedFiles set before adding it
+        if (dataEntries && !displayedFiles.has(value.trim())) {
+            const entry = document.createElement('div');
+            entry.classList.add('mt-2');
+            entry.innerHTML = `
+                <input type="text" class="form-control" value="${type}: ${value}" disabled>
+            `;
+            dataEntries.appendChild(entry);
+            displayedFiles.add(value.trim());  // Track the file as displayed
+        }
+    }
+
+    function submitFile(event) {
+        event.preventDefault(); // Prevent the form from submitting in the default manner
+    
+        var formData = new FormData(event.target); // Gather the form data into an object
+
+        fetch('/upload-file', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            console.log('Success:', data.message);
+
+            // Display all files in the repofetch folder, ensuring no duplicates
+            data.files.forEach(file => addDataEntry('File', file));
+
+            displayFlashMessage(data.message, 'success');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            displayFlashMessage(error.message, 'error');
+        });
+    }
+
+    function handleSubmit(event) {
+        event.preventDefault();
+
+        var formData = new FormData(event.target);
+        var fetchButton = document.getElementById('fetchButton');
+        var loadingSpinner = document.getElementById('loadingSpinner');
+
+        // Show the loading spinner and hide the "Fetch Repo" button
+        fetchButton.style.display = 'none';
+        loadingSpinner.style.display = 'inline-block';
+
+        fetch('/clear-repo', {
+            method: 'POST'
+        })
+        .then(() => {
+            return fetch('/fetch-repo', {
+                method: 'POST',
+                body: formData
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            console.log('Success:', data.message);
+
+            var linkInput = document.getElementById('linkInput');
+            var resetButton = document.getElementById('resetButton');
+
+            linkInput.disabled = true;
+            loadingSpinner.style.display = 'none';
+            resetButton.style.display = 'inline-block';
+
+            // Remove the line that adds the GitHub Repo link to the dataEntries section
+
+            // Display all files in the repofetch folder, ensuring no duplicates
+            data.files.forEach(file => addDataEntry('File', file));
+
+            displayFlashMessage(data.message, 'success');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+
+            loadingSpinner.style.display = 'none';
+            fetchButton.style.display = 'inline-block';
+
+            displayFlashMessage(error.message, 'error');
+        });
+    }
+
+    function handleReset() {
+        fetch('/clear-repo', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            console.log('Success:', data.message);
+
+            // Reset the UI elements
+            var linkInput = document.getElementById('linkInput');
+            var fetchButton = document.getElementById('fetchButton');
+            var resetButton = document.getElementById('resetButton');
+
+            linkInput.disabled = false;
+            linkInput.value = '';
+            fetchButton.style.display = 'inline-block';
+            resetButton.style.display = 'none';
+
+            // Clear the dataEntries section and reset displayedFiles set
+            const dataEntries = document.getElementById('dataEntries');
+            dataEntries.innerHTML = '';
+            displayedFiles.clear();
+
+            displayFlashMessage(data.message, 'success');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            displayFlashMessage(error.message, 'error');
+        });
+    }
+
+    function displayFlashMessage(message, category) {
+        var flashMessageContainer = document.createElement('div');
+        flashMessageContainer.className = `alert alert-${category} alert-dismissible fade show`;
+        flashMessageContainer.role = 'alert';
+        flashMessageContainer.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        document.body.insertBefore(flashMessageContainer, document.body.firstChild);
+
+        setTimeout(() => {
+            flashMessageContainer.classList.remove('show');
+            flashMessageContainer.addEventListener('transitionend', () => flashMessageContainer.remove());
+        }, 5000);
+    }
+</script>
+
+
+{% endblock %}

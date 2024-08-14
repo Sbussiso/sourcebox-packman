@@ -4,6 +4,9 @@ import os
 from langchain_community.document_loaders import WebBaseLoader
 import logging
 from dotenv import load_dotenv
+from git import Repo
+import shutil
+from werkzeug.utils import secure_filename
 
 load_dotenv()
 
@@ -42,15 +45,11 @@ def check_authentication():
         return False
 
 
-
-
 @app.before_request
 def before_request():
     if request.endpoint not in ('login', 'register', 'static'):
         if not check_authentication():
             return redirect(url_for('login'))
-
-
 
 
 @app.route('/')
@@ -70,6 +69,120 @@ def home():
             logger.error(f"Error fetching packs: {e}")
             flash('Error fetching packs', 'danger')
     return render_template('home.html', packs=packs)
+
+
+@app.route('/packman-code')
+def packman_code():
+    return render_template('packman_code.html')
+    
+
+
+def get_files_in_repofetch():
+    directory_path = 'repofetch'
+    if os.path.exists(directory_path) and os.path.isdir(directory_path):
+        return os.listdir(directory_path)
+    return []
+
+@app.route('/upload-file', methods=['POST'])
+def upload_file():
+    try:
+        directory_path = 'repofetch'
+        logging.debug('Entered upload_file function')
+
+        if not os.path.exists(directory_path):
+            os.makedirs(directory_path)
+            logging.debug(f"Directory 'repofetch' created at: {directory_path}")
+        else:
+            logging.debug(f"Directory '{directory_path}' already exists.")
+
+        if 'file' not in request.files:
+            return jsonify({"error": "No file provided"}), 400
+
+        file = request.files['file']
+
+        if file.filename == '':
+            return jsonify({"error": "No selected file"}), 400
+
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(directory_path, filename)
+        file.save(file_path)
+        logging.debug(f"File '{filename}' uploaded to '{file_path}'")
+
+        files = get_files_in_repofetch()
+        return jsonify({"message": f"File '{filename}' successfully uploaded", "files": files}), 200
+
+    except Exception as e:
+        logging.error(f"Server Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/fetch-repo', methods=['POST'])
+def fetch_repo():
+    try:
+        directory_path = 'repofetch'
+        logging.debug('Entered fetch_repo function')
+
+        if os.path.exists(directory_path) and os.path.isdir(directory_path):
+            logging.debug(f"The directory '{directory_path}' already exists.")
+            return jsonify({"error": "Directory already exists"}), 400
+
+        repo_fetch_dir = os.path.join(os.getcwd(), 'repofetch')
+        os.makedirs(repo_fetch_dir, exist_ok=True)
+        logging.debug(f"Directory 'repofetch' created at: {repo_fetch_dir}")
+
+        repo_url = request.form.get('repoURL')
+        logging.debug(f"REPO URL: {repo_url}")
+
+        if not repo_url:
+            return jsonify({"error": "No repository URL provided"}), 400
+
+        try:
+            repo = Repo.clone_from(repo_url, repo_fetch_dir)
+            logging.debug("Pulled repo from GitHub")
+        except Exception as e:
+            logging.error(f"Failed to fetch repository: {e}")
+            return jsonify({"error": str(e)}), 500
+
+        files = get_files_in_repofetch()
+        return jsonify({"message": "Repository successfully fetched", "files": files}), 200
+
+    except Exception as e:
+        logging.error(f"Server Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/clear-repo', methods=['POST'])
+def clear_repo():
+    try:
+        # Define the path to the directory
+        repo_directory_path = 'repofetch'
+        deeplake_directory_path = 'my_deeplake'
+
+        # Check if the repo directory exists
+        if os.path.exists(repo_directory_path) and os.path.isdir(repo_directory_path):
+            logging.debug(f"The directory '{repo_directory_path}' exists. deleting folder")
+            shutil.rmtree(repo_directory_path)
+            logging.debug(f"Directory 'repofetch' deleted")
+        else:
+            logging.debug(f"The directory '{repo_directory_path}' does not exist. No folder to delete")
+
+        # Check if the my_deeplake directory exists
+        if os.path.exists(deeplake_directory_path) and os.path.isdir(deeplake_directory_path):
+            logging.debug(f"The directory '{deeplake_directory_path}' exists. deleting folder")
+            shutil.rmtree(deeplake_directory_path)
+            logging.debug(f"Directory 'my_deeplake' deleted")
+        else:
+            logging.debug(f"The directory '{deeplake_directory_path}' does not exist. No folder to delete")
+
+        # delete processed files metadata
+        main_directory = os.getcwd()
+        file = os.path.join(main_directory, 'processed_files_metadata.json')
+        if os.path.exists(file):
+            os.remove(file)
+
+        return jsonify({"message": "Directory cleared"}), 200
+    except Exception as e:
+        logging.error(f"Server Error: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 
@@ -146,13 +259,9 @@ def login():
     return render_template('login.html')
 
 
-
-
 @app.route('/packman')
 def packman():
     return render_template('packman.html')
-
-
 
 
 @app.route('/packman/package_pack', methods=['POST'])
