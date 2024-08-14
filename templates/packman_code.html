@@ -2,7 +2,7 @@
 {% block title %}PackMan Code{% endblock %}
 {% block content %}
 <header class="bg-primary text-white text-center py-3">
-    <h1>Pack Panel</h1>
+    <h1>Code Pack Panel</h1>
 </header>
 <br/><br/>
 
@@ -47,12 +47,34 @@
                     </div>
                     <div id="message" class="mt-3"></div>
                     <!-- Data Entries Display Area -->
-                    <div id="dataEntries" class="mt-3"></div>
+                    <div id="dataEntries" class="mt-3" style="max-height: 500px; overflow-y: auto;"></div>
+                    <br/>
+                    <button id="publishPackButton" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#publishModal" style="display: none;">Publish to Pack</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Modal -->
+<div class="modal fade" id="publishModal" tabindex="-1" aria-labelledby="publishModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="publishModalLabel">Confirm Publish</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to publish this pack?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <br/><br/>
 <script>
     // Initialize the set to track displayed files
@@ -97,6 +119,11 @@
             `;
             dataEntries.appendChild(entry);
             displayedFiles.add(value.trim());  // Track the file as displayed
+        }
+
+        // Show the "Publish to Pack" button if there are any data entries
+        if (displayedFiles.size > 0) {
+            document.getElementById('publishPackButton').style.display = 'block';
         }
     }
 
@@ -212,6 +239,9 @@
             dataEntries.innerHTML = '';
             displayedFiles.clear();
 
+            // Hide the "Publish to Pack" button
+            document.getElementById('publishPackButton').style.display = 'none';
+
             displayFlashMessage(data.message, 'success');
         })
         .catch(error => {
@@ -236,6 +266,5 @@
         }, 5000);
     }
 </script>
-
 
 {% endblock %}
