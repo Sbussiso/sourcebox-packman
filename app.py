@@ -55,20 +55,32 @@ def before_request():
 @app.route('/')
 def home():
     packs = []
+    code_packs = []  # Initialize an empty list for code packs
     if 'access_token' in session:
         token = session.get('access_token')
         headers = {'Authorization': f'Bearer {token}'}
         try:
+            # Fetch regular packs
             response = requests.get(f"{API_URL}/packman/list_packs", headers=headers)
             if response.status_code == 200:
                 packs = response.json()
             else:
                 logger.error(f"Failed to fetch packs: {response.text}")
                 flash('Failed to fetch packs', 'danger')
+
+            # Fetch code packs
+            response = requests.get(f"{API_URL}/packman/code/list_code_packs", headers=headers)
+            if response.status_code == 200:
+                code_packs = response.json()
+            else:
+                logger.error(f"Failed to fetch code packs: {response.text}")
+                flash('Failed to fetch code packs', 'danger')
+
         except requests.RequestException as e:
             logger.error(f"Error fetching packs: {e}")
             flash('Error fetching packs', 'danger')
-    return render_template('home.html', packs=packs)
+    return render_template('home.html', packs=packs, code_packs=code_packs)
+
 
 
 @app.route('/packman-code')
@@ -189,20 +201,32 @@ def clear_repo():
 @app.route('/del-pack')
 def del_pack():
     packs = []
+    code_packs = []
     if 'access_token' in session:
         token = session.get('access_token')
         headers = {'Authorization': f'Bearer {token}'}
         try:
+            # Fetch regular packs
             response = requests.get(f"{API_URL}/packman/list_packs", headers=headers)
             if response.status_code == 200:
                 packs = response.json()
             else:
                 logger.error(f"Failed to fetch packs: {response.text}")
                 flash('Failed to fetch packs', 'danger')
+
+            # Fetch code packs
+            response = requests.get(f"{API_URL}/packman/code/list_code_packs", headers=headers)
+            if response.status_code == 200:
+                code_packs = response.json()
+            else:
+                logger.error(f"Failed to fetch code packs: {response.text}")
+                flash('Failed to fetch code packs', 'danger')
+
         except requests.RequestException as e:
             logger.error(f"Error fetching packs: {e}")
             flash('Error fetching packs', 'danger')
-    return render_template('del_pack.html', packs=packs)
+    return render_template('del_pack.html', packs=packs, code_packs=code_packs)
+
 
 
 
@@ -223,6 +247,26 @@ def delete_pack(pack_id):
     except requests.RequestException as e:
         logger.error(f"Error deleting pack: {e}")
         return jsonify({'message': 'Error deleting pack'}), 500
+
+
+
+@app.route('/delete_code_pack/<int:pack_id>', methods=['DELETE'])
+def delete_code_pack(pack_id):
+    if 'access_token' not in session:
+        return jsonify({'message': 'Unauthorized'}), 401
+
+    token = session.get('access_token')
+    headers = {'Authorization': f'Bearer {token}'}
+    try:
+        response = requests.delete(f"{API_URL}/packman/code_pack/{pack_id}", headers=headers)
+        if response.status_code == 200:
+            return jsonify({'message': 'Code pack deleted successfully'}), 200
+        else:
+            logger.error(f"Failed to delete code pack: {response.text}")
+            return jsonify({'message': 'Failed to delete code pack'}), response.status_code
+    except requests.RequestException as e:
+        logger.error(f"Error deleting code pack: {e}")
+        return jsonify({'message': 'Error deleting code pack'}), 500
 
 
 
@@ -355,6 +399,39 @@ def list_packs():
         logger.error(f"Error fetching packs: {e}")
         flash('Error fetching packs', 'danger')
         return jsonify({'message': 'Error fetching packs'}), 500
+
+
+@app.route('/packman-code/package_code_pack', methods=['POST'])
+def package_code_pack():
+    token = session.get('access_token')
+    data = request.get_json()
+
+    pack_name = data.get('pack_name')
+    contents = data.get('contents')
+
+    if not pack_name or not contents:
+        flash('Pack name and contents are required', 'danger')
+        return jsonify({'message': 'Pack name and contents are required'}), 400
+
+    headers = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'}
+
+    try:
+        response = requests.post(f"{API_URL}/packman/code_pack", json={
+            'pack_name': pack_name,
+            'contents': contents
+        }, headers=headers)
+
+        if response.status_code != 201:
+            logger.error(f"Failed to process code pack: {response.text}")
+            flash('Failed to process code pack', 'danger')
+            return jsonify({'message': 'Failed to process code pack'}), 500
+
+        flash('Code pack published successfully!', 'success')
+        return jsonify(response.json()), 201
+    except requests.RequestException as e:
+        logger.error(f"Error processing code pack: {e}")
+        flash('Error processing code pack', 'danger')
+        return jsonify({'message': 'Error processing code pack'}), 500
 
 
 

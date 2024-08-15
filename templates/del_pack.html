@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}Delete Packs{% endblock %}
+{% block title %}Delete Packs and Code Packs{% endblock %}
 
 {% block content %}
-<h1 class="my-4">Delete Packs</h1>
+<h1 class="my-4">Delete Packs and Code Packs</h1>
 
 {% if 'access_token' not in session %}
     <a href="{{ url_for('register') }}" class="btn btn-primary">Register</a>
@@ -12,7 +12,6 @@
 
 {% if 'access_token' in session %}
     <div class="container">
-        <br/>
         <br/>
         <h2>Available Packs</h2>
         <br/>
@@ -27,6 +26,21 @@
             </ul>
         {% else %}
             <p>No packs available.</p>
+        {% endif %}
+        <br/>
+        <h2>Available Code Packs</h2>
+        <br/>
+        {% if code_packs %}
+            <ul class="list-group">
+                {% for code_pack in code_packs %}
+                    <li class="list-group-item">
+                        <strong>{{ code_pack.pack_name }}</strong>
+                        <button class="btn btn-danger btn-sm float-end" onclick="deleteCodePack('{{ code_pack.id }}')">Delete</button>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No code packs available.</p>
         {% endif %}
         <br/>
         <a href="/" class="btn btn-primary">Back to Home</a>
@@ -54,6 +68,29 @@
         .catch(error => {
             console.error('Error:', error);
             alert('Failed to delete pack');
+        });
+    }
+
+    function deleteCodePack(packId) {
+        const token = sessionStorage.getItem('access_token');
+        fetch(`/delete_code_pack/${packId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                response.json().then(data => {
+                    alert(data.message || 'Failed to delete code pack');
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to delete code pack');
         });
     }
 </script>

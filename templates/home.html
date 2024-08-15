@@ -55,6 +55,44 @@
             <p>No packs available.</p>
         {% endif %}
         <br/>
+        <h2>Available Code Packs</h2>
+        <br/>
+        {% if code_packs %}
+            <div class="accordion" id="codePacksAccordion">
+                {% for code_pack in code_packs %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingCode{{ loop.index }}">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCode{{ loop.index }}" aria-expanded="true" aria-controls="collapseCode{{ loop.index }}">
+                                {{ code_pack.pack_name }}
+                            </button>
+                        </h2>
+                        <div id="collapseCode{{ loop.index }}" class="accordion-collapse collapse show" aria-labelledby="headingCode{{ loop.index }}" data-bs-parent="#codePacksAccordion">
+                            <div class="accordion-body">
+                                <div class="accordion" id="contentAccordionCode{{ loop.index }}">
+                                    {% for content in code_pack.contents %}
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="headingContentCode{{ loop.index }}{{ loop.index0 }}">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseContentCode{{ loop.index }}{{ loop.index0 }}" aria-expanded="false" aria-controls="collapseContentCode{{ loop.index }}{{ loop.index0 }}">
+                                                    {% if content.data_type == 'file' %}File: {{ content.filename }}{% else %}Web Content: {% endif %}
+                                                </button>
+                                            </h2>
+                                            <div id="collapseContentCode{{ loop.index }}{{ loop.index0 }}" class="accordion-collapse collapse" aria-labelledby="headingContentCode{{ loop.index }}{{ loop.index0 }}" data-bs-parent="#contentAccordionCode{{ loop.index }}">
+                                                <div class="accordion-body">
+                                                    <p>{{ content.content }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>No code packs available.</p>
+        {% endif %}
+        <br/>
         <a href="/packman" class="btn btn-primary">Add Pack</a>
         <a href="/packman-code" class="btn btn-primary">Add Code Pack</a>
         <a href="/del-pack" class="btn btn-danger">Delete Pack</a>
