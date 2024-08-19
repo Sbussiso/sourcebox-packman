@@ -183,13 +183,13 @@ def home():
     return render_template('home.html', packs=packs, code_packs=code_packs)
 
 
-
+#packman-code html page
 @app.route('/packman-code')
 def packman_code():
     return render_template('packman_code.html')
     
 
-
+#leaves out .git files and directories
 def get_files_in_repofetch():
     directory_path = 'repofetch'
     if os.path.exists(directory_path) and os.path.isdir(directory_path):
