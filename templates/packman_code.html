@@ -76,9 +76,10 @@
 </div>
 
 <br/><br/>
+
 <script>
-    // Initialize the set to track displayed files
     let displayedFiles = new Set();
+    let packData = [];  // To store the file content
 
     document.getElementById('backHome').onclick = function() {
         window.location.href = '/';
@@ -89,28 +90,27 @@
         const packNameInput = document.getElementById('packName');
     
         if (type === 'file') {
-            githubForm.style.display = 'none'; // Hide GitHub link input form
-            packNameInput.disabled = false; // Keep the Pack Name input field enabled
+            githubForm.style.display = 'none';
+            packNameInput.disabled = false;
             document.getElementById('message').innerHTML = `
                 <p class="text-danger">You are about to add a code file.</p>
-                <form id="fileForm" enctype="multipart/form-data" onsubmit="submitFile(event)">
-                    <input type="file" name="file" class="form-control mt-2" required>
+                <form id="fileForm" enctype="multipart/form-data" onsubmit="submitFilesForReading(event)">
+                    <input type="file" name="files" class="form-control mt-2" multiple required>
                     <input type="hidden" name="pack_name" value="${packNameInput.value}">
                     <br/>
                     <button type="submit" class="btn btn-primary">Add Data</button>
                 </form>
             `;
         } else if (type === 'github') {
-            githubForm.style.display = 'block'; // Show GitHub link input form
-            packNameInput.disabled = true; // Lock the Pack Name input field
-            document.getElementById('message').innerHTML = ''; // Clear the message area since the form is now visible
+            githubForm.style.display = 'block';
+            packNameInput.disabled = true;
+            document.getElementById('message').innerHTML = ''; 
         }
     }
 
     function addDataEntry(type, value) {
         const dataEntries = document.getElementById('dataEntries');
         
-        // Check if the value is already in the displayedFiles set before adding it
         if (dataEntries && !displayedFiles.has(value.trim())) {
             const entry = document.createElement('div');
             entry.classList.add('mt-2');
@@ -118,41 +118,48 @@
                 <input type="text" class="form-control" value="${type}: ${value}" disabled>
             `;
             dataEntries.appendChild(entry);
-            displayedFiles.add(value.trim());  // Track the file as displayed
+            displayedFiles.add(value.trim());
         }
 
-        // Show the "Publish to Pack" button if there are any data entries
         if (displayedFiles.size > 0) {
             document.getElementById('publishPackButton').style.display = 'block';
         }
     }
 
-    function submitFile(event) {
-        event.preventDefault(); // Prevent the form from submitting in the default manner
-    
-        var formData = new FormData(event.target); // Gather the form data into an object
+    function submitFilesForReading(event) {
+        event.preventDefault();
+        const files = event.target.querySelector('input[name="files"]').files;
+        const formData = new FormData();
+        
+        for (let i = 0; i < files.length; i++) {
+            formData.append('files', files[i]);
+        }
 
-        fetch('/upload-file', {
+        fetch('/read-files', {
             method: 'POST',
             body: formData
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
             if (data.error) {
                 throw new Error(data.error);
             }
 
-            console.log('Success:', data.message);
+            console.log("Files received from server:", data);
 
-            // Display all files in the repofetch folder, ensuring no duplicates
-            data.files.forEach(file => addDataEntry('File', file));
+            packData = [];
 
-            displayFlashMessage(data.message, 'success');
+            data.forEach(fileData => {
+                packData.push({
+                    filename: fileData.filename,
+                    content: fileData.content,
+                    data_type: 'file'
+                });
+                addDataEntry('File', fileData.filename);
+            });
+
+            console.log("Current packData:", packData);
+            displayFlashMessage('Files processed successfully!', 'success');
         })
         .catch(error => {
             console.error('Error:', error);
@@ -162,12 +169,10 @@
 
     function handleSubmit(event) {
         event.preventDefault();
+        const formData = new FormData(event.target);
+        const fetchButton = document.getElementById('fetchButton');
+        const loadingSpinner = document.getElementById('loadingSpinner');
 
-        var formData = new FormData(event.target);
-        var fetchButton = document.getElementById('fetchButton');
-        var loadingSpinner = document.getElementById('loadingSpinner');
-
-        // Show the loading spinner and hide the "Fetch Repo" button
         fetchButton.style.display = 'none';
         loadingSpinner.style.display = 'inline-block';
 
@@ -178,7 +183,7 @@
             return fetch('/fetch-repo', {
                 method: 'POST',
                 body: formData
-            })
+            });
         })
         .then(response => response.json())
         .then(data => {
@@ -186,29 +191,58 @@
                 throw new Error(data.error);
             }
 
-            console.log('Success:', data.message);
+            console.log("Repository files fetched:", data.files);
 
-            var linkInput = document.getElementById('linkInput');
-            var resetButton = document.getElementById('resetButton');
+            const linkInput = document.getElementById('linkInput');
+            const resetButton = document.getElementById('resetButton');
 
             linkInput.disabled = true;
             loadingSpinner.style.display = 'none';
             resetButton.style.display = 'inline-block';
 
-            // Display all files in the repofetch folder, ensuring no duplicates
-            data.files.forEach(file => addDataEntry('File', file));
+            // Fetch repo files and then retrieve their content
+            data.files.forEach(file => {
+                addDataEntry('File', file);
+                fetchRepoFileContent(file);  // Fetch content for each file
+            });
 
             displayFlashMessage(data.message, 'success');
         })
         .catch(error => {
             console.error('Error:', error);
-
             loadingSpinner.style.display = 'none';
             fetchButton.style.display = 'inline-block';
-
             displayFlashMessage(error.message, 'error');
         });
     }
+
+    function fetchRepoFileContent(filename) {
+        // Skip directories like .git
+        if (filename === '.git') {
+            console.log(`Skipping directory: ${filename}`);
+            return;  // Skip the .git directory entirely
+        }
+    
+        fetch(`/get-repo-file-content?filename=${encodeURIComponent(filename)}`)
+            .then(response => response.json())
+            .then(fileData => {
+                if (fileData.error) {
+                    throw new Error(fileData.error);
+                }
+    
+                packData.push({
+                    filename: fileData.filename,
+                    content: fileData.content,
+                    data_type: 'file'
+                });
+    
+                console.log("Fetched content for file:", fileData);
+            })
+            .catch(error => {
+                console.error('Error fetching file content:', error);
+            });
+    }
+    
 
     function handleReset() {
         fetch('/clear-repo', {
@@ -220,24 +254,19 @@
                 throw new Error(data.error);
             }
 
-            console.log('Success:', data.message);
-
-            // Reset the UI elements
-            var linkInput = document.getElementById('linkInput');
-            var fetchButton = document.getElementById('fetchButton');
-            var resetButton = document.getElementById('resetButton');
+            const linkInput = document.getElementById('linkInput');
+            const fetchButton = document.getElementById('fetchButton');
+            const resetButton = document.getElementById('resetButton');
 
             linkInput.disabled = false;
             linkInput.value = '';
             fetchButton.style.display = 'inline-block';
             resetButton.style.display = 'none';
 
-            // Clear the dataEntries section and reset displayedFiles set
             const dataEntries = document.getElementById('dataEntries');
             dataEntries.innerHTML = '';
             displayedFiles.clear();
 
-            // Hide the "Publish to Pack" button
             document.getElementById('publishPackButton').style.display = 'none';
 
             displayFlashMessage(data.message, 'success');
@@ -266,47 +295,51 @@
 
     function publishCodePack() {
         const packName = document.getElementById('packName').value;
-        const dataEntries = Array.from(displayedFiles);
-    
-        if (!packName || dataEntries.length === 0) {
+        if (!packName || displayedFiles.size === 0) {
             displayFlashMessage('Pack name and data entries are required', 'danger');
             return;
         }
-    
-        const contents = dataEntries.map(file => ({
+
+        const contents = packData.map(file => ({
             data_type: 'file',
-            content: file,
-            filename: file
+            content: file.content,
+            filename: file.filename
         }));
-    
-        const data = {
+
+        const payload = {
             pack_name: packName,
             contents: contents
         };
-    
+
+        console.log("Payload being sent to the server:", payload);
+
         fetch('/packman-code/package_code_pack', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify(payload)
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                return response.json().then(error => {
+                    console.error("Error payload sent to server:", payload);
+                    console.error(`HTTP error! status: ${response.status}`);
+                    throw new Error(`Failed to publish code pack: ${error.message}`);
+                });
             }
             return response.json();
         })
         .then(data => {
             displayFlashMessage('Code pack published successfully!', 'success');
-            console.log('Success:', data);
-            window.location.reload();  // Reload the page to display flash messages
+            window.location.reload();
         })
         .catch(error => {
-            console.error('Error:', error);
-            displayFlashMessage('Failed to publish code pack', 'danger');
+            console.error('Error:', error.message);
+            displayFlashMessage(`Failed to publish code pack: ${error.message}`, 'danger');
         });
     }
 </script>
+
 
 {% endblock %}

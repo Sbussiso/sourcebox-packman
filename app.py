@@ -45,11 +45,112 @@ def check_authentication():
         return False
 
 
+@app.route('/read-files', methods=['POST'])
+def read_files():
+    allowed_file_extensions = [
+        '.txt', '.json', '.csv', '.py', '.js', '.html', '.css', '.md', '.xml', 
+        '.yaml', '.yml', '.ini', '.sh', '.bat', '.log', '.ts', '.jsx', '.tsx', 
+        '.cpp', '.c', '.h', '.java', '.rb', '.php', '.go', '.swift', '.rs', 
+        '.kt', '.pl', '.lua', '.r', '.m', '.scss', '.sass', '.less'
+    ]
+
+    try:
+        # Log the start of the function
+        app.logger.info("Received request to read files.")
+        print("Received request to read files.")
+
+        # Check if files were provided in the request
+        if 'files' not in request.files:
+            app.logger.error("No files provided in the request.")
+            print("No files provided in the request.")
+            return jsonify({"error": "No files provided"}), 400
+
+        # Get the list of files
+        files = request.files.getlist('files')
+        app.logger.info(f"Received {len(files)} files.")
+        print(f"Received {len(files)} files.")
+
+        # List to store the processed file contents
+        file_contents = []
+
+        if not files:
+            app.logger.error("Empty file list in the request.")
+            print("Empty file list in the request.")
+            return jsonify({"error": "No files provided"}), 400
+
+        # Iterate over the files
+        for file in files:
+            filename = file.filename
+            app.logger.info(f"Processing file: {filename}")
+            print(f"Processing file: {filename}")
+
+            # Check if the file extension is allowed
+            if not filename.endswith(tuple(allowed_file_extensions)):
+                app.logger.warning(f"Skipping unsupported file: {filename}")
+                print(f"Skipping unsupported file: {filename}")
+                continue
+
+            try:
+                # Read the content as text (assuming UTF-8 encoding)
+                content = file.read().decode('utf-8')
+                file_contents.append({
+                    'filename': filename,
+                    'content': content
+                })
+                app.logger.info(f"Successfully processed file: {filename}")
+                print(f"Successfully processed file: {filename}")
+
+            except Exception as e:
+                app.logger.error(f"Error processing file {filename}: {str(e)}")
+                print(f"Error processing file {filename}: {str(e)}")
+                return jsonify({"error": f"Failed to process {filename}"}), 500
+
+        # Log the total number of successfully processed files
+        app.logger.info(f"Successfully processed {len(file_contents)} files out of {len(files)}.")
+        print(f"Successfully processed {len(file_contents)} files out of {len(files)}.")
+
+        return jsonify(file_contents), 200
+
+    except Exception as e:
+        # Log the error in case of an exception
+        app.logger.error(f"Server Error: {str(e)}")
+        print(f"Server Error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+
+@app.route('/get-repo-file-content', methods=['GET'])
+def get_repo_file_content():
+    filename = request.args.get('filename')
+    repo_directory = 'repofetch'  # Directory where the repo was cloned
+
+    # Check if the file exists
+    file_path = os.path.join(repo_directory, filename)
+    
+    if not os.path.exists(file_path):
+        app.logger.error(f"File not found: {filename}")
+        return jsonify({"error": "File not found"}), 404
+    
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            content = file.read()
+
+        app.logger.info(f"Successfully fetched content for file: {filename}")
+        return jsonify({"filename": filename, "content": content}), 200
+
+    except Exception as e:
+        app.logger.error(f"Error reading file {filename}: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+
+
 @app.before_request
 def before_request():
     if request.endpoint not in ('login', 'register', 'static'):
         if not check_authentication():
             return redirect(url_for('login'))
+
 
 
 @app.route('/')
@@ -92,8 +193,10 @@ def packman_code():
 def get_files_in_repofetch():
     directory_path = 'repofetch'
     if os.path.exists(directory_path) and os.path.isdir(directory_path):
-        return os.listdir(directory_path)
+        # Skip .git directory and any other directories
+        return [f for f in os.listdir(directory_path) if f != '.git' and not os.path.isdir(os.path.join(directory_path, f))]
     return []
+
 
 @app.route('/upload-file', methods=['POST'])
 def upload_file():
