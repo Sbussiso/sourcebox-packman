@@ -209,53 +209,60 @@
     }
 
     function submitAwsDump(event) {
-        event.preventDefault();
-        const form = event.target;
-        const formData = new FormData(form);
-        const bucketUrl = formData.get('bucket_url');
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const bucketUrl = formData.get('bucket_url');
 
-        fetch('/aws-bucket-dump', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ bucket_url: bucketUrl })
-        })
+    fetch('/aws-bucket-dump', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ bucket_url: bucketUrl })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            alert(data.message);
+            // After successfully dumping, call the function to display contents
+            fetchBucketDumpContents();  // Fetch and display dumped files
+            form.reset();
+            disablePackName();
+        } else if (data.error) {
+            alert(data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to dump the bucket');
+    });
+}
+
+    function fetchBucketDumpContents() {
+        fetch('/read-bucket-dump')
         .then(response => response.json())
         .then(data => {
-            if (data.message) {
-                alert(data.message);
-                // Process the contents of the bucket and push to packData
-                fetchBucketDumpContents(bucketUrl);  // Function to handle reading files from the dump
-                form.reset();
-                disablePackName();
-            } else if (data.error) {
-                alert(data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Failed to dump the bucket');
-        });
-    }
-
-    function fetchBucketDumpContents(bucketUrl) {
-        fetch(`/read-bucket-dump?bucket_url=${bucketUrl}`)
-        .then(response => response.json())
-        .then(data => {
-            data.files.forEach(file => {
-                packData.push({
-                    content: file.content,
-                    data_type: 'file',
-                    filename: file.filename
+            if (data.files) {
+                // Loop through each file and add to packData
+                data.files.forEach(file => {
+                    packData.push({
+                        content: file.content,  // Content of the file
+                        data_type: 'file',      // Type of data
+                        filename: file.filename // Filename
+                    });
+                    // Add the entry to the UI
+                    addDataEntry('AWS Bucket File', file.filename);
                 });
-                addDataEntry('AWS Bucket File', file.filename);
-            });
+            } else {
+                console.error('No files returned from bucket dump.');
+            }
         })
         .catch(error => {
             console.error('Error reading bucket dump contents:', error);
         });
     }
+
 
     function openAccordionTwo() {
         const collapseTwo = new bootstrap.Collapse(document.getElementById('collapseTwo'), {

@@ -11,6 +11,7 @@ import boto3
 from urllib.parse import urlparse
 from botocore import UNSIGNED
 from botocore.client import Config
+import PyPDF2
 
 load_dotenv()
 
@@ -175,17 +176,22 @@ def aws_bucket_dump():
         return jsonify({'error': str(e)}), 500
 
 
+
 @app.route('/read-bucket-dump', methods=['GET'])
 def read_bucket_dump():
     # The local folder where the bucket contents were dumped
     local_folder = os.path.join(os.getcwd(), 'aws_bucket_dump')
     
+    # Allowed file extensions for text files
     allowed_file_extensions = [
-        '.txt', '.json', '.csv', '.py', '.js', '.html', '.css', '.md', '.xml', 
-        '.yaml', '.yml', '.ini', '.sh', '.bat', '.log', '.ts', '.jsx', '.tsx', 
-        '.cpp', '.c', '.h', '.java', '.rb', '.php', '.go', '.swift', '.rs', 
-        '.kt', '.pl', '.lua', '.r', '.m', '.scss', '.sass', '.less'
+        '.txt', '.json', '.csv', '.xml', '.yaml', '.yml', '.md', '.ini', '.log',
+        '.html', '.css', '.scss', '.sass', '.less', '.py', '.js', '.ts', 
+        '.jsx', '.tsx', '.cpp', '.c', '.h', '.java', '.rb', '.php', '.go', 
+        '.swift', '.rs', '.kt', '.pl', '.lua', '.r', '.m', '.sh', '.bat'
     ]
+    
+    # File extensions considered binary (handled separately)
+    binary_file_extensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.zip', '.tar', '.gz']
     
     try:
         if not os.path.exists(local_folder):
@@ -197,20 +203,43 @@ def read_bucket_dump():
         for root, dirs, files in os.walk(local_folder):
             for file in files:
                 file_path = os.path.join(root, file)
-                if not file.endswith(tuple(allowed_file_extensions)):
-                    continue
-
-                # Read the file contents
-                try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        content = f.read()
+                extension = os.path.splitext(file)[1].lower()
+                
+                if extension in allowed_file_extensions:
+                    # Handle text files
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                        file_contents.append({
+                            'filename': file,
+                            'content': content,
+                            'is_binary': False
+                        })
+                    except Exception as e:
+                        app.logger.error(f"Error reading file {file}: {str(e)}")
+                        return jsonify({'error': f"Failed to read {file}"}), 500
+                elif extension == '.pdf':
+                    # Handle PDF files
+                    try:
+                        content = extract_pdf_text(file_path)
+                        file_contents.append({
+                            'filename': file,
+                            'content': content,
+                            'is_binary': False
+                        })
+                    except Exception as e:
+                        app.logger.error(f"Error reading PDF {file}: {str(e)}")
+                        return jsonify({'error': f"Failed to read {file}"}), 500
+                elif extension in binary_file_extensions:
+                    # Handle binary files (do not read the content, just indicate it's a binary file)
                     file_contents.append({
                         'filename': file,
-                        'content': content
+                        'content': 'Binary file - content not displayed',
+                        'is_binary': True
                     })
-                except Exception as e:
-                    app.logger.error(f"Error reading file {file}: {str(e)}")
-                    return jsonify({'error': f"Failed to read {file}"}), 500
+                else:
+                    # Skip unsupported file types
+                    continue
 
         return jsonify({'files': file_contents}), 200
 
@@ -218,14 +247,34 @@ def read_bucket_dump():
         app.logger.error(f"Error reading bucket dump: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+# Helper function to extract text from PDFs using PyPDF2
+def extract_pdf_text(file_path):
+    pdf_text = ""
+    with open(file_path, 'rb') as pdf_file:
+        reader = PyPDF2.PdfReader(pdf_file)
+        # Extract text from each page
+        for page_num in range(len(reader.pages)):
+            page = reader.pages[page_num]
+            pdf_text += page.extract_text()
+    return pdf_text
+
+
 
 @app.route('/read-files', methods=['POST'])
 def read_files():
     allowed_file_extensions = [
-        '.txt', '.json', '.csv', '.py', '.js', '.html', '.css', '.md', '.xml', 
-        '.yaml', '.yml', '.ini', '.sh', '.bat', '.log', '.ts', '.jsx', '.tsx', 
-        '.cpp', '.c', '.h', '.java', '.rb', '.php', '.go', '.swift', '.rs', 
-        '.kt', '.pl', '.lua', '.r', '.m', '.scss', '.sass', '.less'
+    # Text and Data Files
+    '.txt', '.json', '.csv', '.xml', '.yaml', '.yml', '.md', '.ini', '.log', '.pdf',
+    
+    # Web and Style Files
+    '.html', '.css', '.scss', '.sass', '.less',
+    
+    # Programming and Scripting Languages
+    '.py', '.js', '.ts', '.jsx', '.tsx', '.cpp', '.c', '.h', '.java', '.rb', 
+    '.php', '.go', '.swift', '.rs', '.kt', '.pl', '.lua', '.r', '.m', 
+    
+    # Shell/Bash and Batch Files
+    '.sh', '.bat'
     ]
 
     try:
