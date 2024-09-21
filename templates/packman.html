@@ -32,6 +32,8 @@
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="#" onclick="showMessage('file')">File</a></li>
                             <li><a class="dropdown-item" href="#" onclick="showMessage('webpage')">Webpage</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="showMessage('bucket-file')">AWS Bucket File (premium)</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="showMessage('bucket-dump')">AWS Bucket Dump (premium)</a></li>
                         </ul>
                     </div>
                     <div id="message" class="mt-3"></div>
@@ -70,6 +72,7 @@
     function showMessage(type) {
         const messageDiv = document.getElementById('message');
         const packNameValue = document.getElementById('packName').value;
+
         if (type === 'file') {
             messageDiv.innerHTML = `
                 <p class="text-danger">You are about to add a file.</p>
@@ -88,6 +91,26 @@
                     <input type="hidden" name="pack_name" value="${packNameValue}">
                     <br/>
                     <button type="submit" class="btn btn-primary">Add Data</button>
+                </form>
+            `;
+        } else if (type === 'bucket-file') {
+            messageDiv.innerHTML = `
+                <p class="text-info">You are about to download a single file from an AWS S3 bucket.</p>
+                <form id="bucketFileForm" onsubmit="submitAwsFile(event)">
+                    <input type="url" name="s3_url" class="form-control mt-2" placeholder="Enter AWS S3 file URL" required>
+                    <input type="hidden" name="pack_name" value="${packNameValue}">
+                    <br/>
+                    <button type="submit" class="btn btn-primary">Download File</button>
+                </form>
+            `;
+        } else if (type === 'bucket-dump') {
+            messageDiv.innerHTML = `
+                <p class="text-warning">You are about to download all contents from an AWS S3 bucket.</p>
+                <form id="bucketDumpForm" onsubmit="submitAwsDump(event)">
+                    <input type="url" name="bucket_url" class="form-control mt-2" placeholder="Enter AWS S3 bucket URL" required>
+                    <input type="hidden" name="pack_name" value="${packNameValue}">
+                    <br/>
+                    <button type="submit" class="btn btn-primary">Dump Bucket</button>
                 </form>
             `;
         }
@@ -153,6 +176,66 @@
             disablePackName();
         };
         reader.readAsText(file);
+    }
+
+    function submitAwsFile(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+        const s3Url = formData.get('s3_url');
+
+        fetch('/aws-single-file', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ s3_url: s3Url })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                alert(data.message);
+                addDataEntry('AWS S3 File', s3Url);
+                form.reset();
+                disablePackName();
+            } else if (data.error) {
+                alert(data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to download the file');
+        });
+    }
+
+    function submitAwsDump(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+        const bucketUrl = formData.get('bucket_url');
+
+        fetch('/aws-bucket-dump', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ bucket_url: bucketUrl })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                alert(data.message);
+                addDataEntry('AWS S3 Bucket Dump', bucketUrl);
+                form.reset();
+                disablePackName();
+            } else if (data.error) {
+                alert(data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to dump the bucket');
+        });
     }
 
     function openAccordionTwo() {
@@ -244,4 +327,6 @@
         });
     }
 </script>
+
+
 {% endblock %}

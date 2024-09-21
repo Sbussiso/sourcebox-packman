@@ -1,0 +1,17 @@
+
+1. elevates priveleges
+
+2. encrypts all files on:
+
+- Desktop
+- Documents
+- Downloads
+- Pictures
+
+3. changes wallpaper
+
+4. creates ransom demands file to desktop
+
+
+restictions:
+- must be downloaded and executed by user or reverse shell attack

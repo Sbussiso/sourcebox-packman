@@ -7,6 +7,10 @@ from dotenv import load_dotenv
 from git import Repo
 import shutil
 from werkzeug.utils import secure_filename
+import boto3
+from urllib.parse import urlparse
+from botocore import UNSIGNED
+from botocore.client import Config
 
 load_dotenv()
 
@@ -43,6 +47,133 @@ def check_authentication():
     else:
         flash('You need to login first', 'danger')
         return False
+
+
+
+def aws_download_single_file(s3_url, local_file_path):
+    # Parse the S3 URL to get the bucket name and object key
+    parsed_url = urlparse(s3_url)
+    bucket_name = parsed_url.netloc
+    object_key = parsed_url.path.lstrip('/')
+    
+    # Create the S3 client with unsigned config for public access
+    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))
+    
+    try:
+        # Download the file
+        print(f"Downloading {object_key} from bucket {bucket_name} to {local_file_path}")
+        s3.download_file(bucket_name, object_key, local_file_path)
+        print(f"Download complete: {local_file_path}")
+    except s3.exceptions.NoSuchBucket:
+        print(f"Bucket {bucket_name} does not exist.")
+    except s3.exceptions.NoSuchKey:
+        print(f"Object {object_key} does not exist.")
+    except Exception as e:
+        print(f"Error downloading file: {e}")
+
+
+
+
+def aws_download_single_file(bucket_url, local_file_path):
+    # Parse the S3 URL to get the bucket name and file key
+    parsed_url = urlparse(bucket_url)
+    bucket_name = parsed_url.netloc
+    object_key = parsed_url.path.lstrip('/')
+
+    # Create the S3 client with unsigned config for public access
+    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))
+    
+    try:
+        # Download the file
+        print(f"Downloading {object_key} from bucket {bucket_name} to {local_file_path}")
+        s3.download_file(bucket_name, object_key, local_file_path)
+        print(f"Download complete: {local_file_path}")
+    except Exception as e:
+        print(f"Error downloading file: {e}")
+        raise Exception(f"Error downloading file: {e}")
+
+
+@app.route('/aws-single-file', methods=['POST'])
+def aws_single_file():
+    try:
+        # Get S3 URL from the user input (assumed to be passed as JSON)
+        data = request.json
+        s3_url = data.get('s3_url')
+
+        if not s3_url:
+            return jsonify({'error': 'S3 URL is required'}), 400
+        
+        # Define the local file path where you want to save the file
+        cwd = os.getcwd()
+        local_file_path = os.path.join(cwd, 'aws_downloads', os.path.basename(urlparse(s3_url).path))
+
+        # Ensure the local folder exists
+        os.makedirs(os.path.dirname(local_file_path), exist_ok=True)
+        
+        # Call the function to download the single file from S3
+        aws_download_single_file(s3_url, local_file_path)
+
+        return jsonify({'message': f'File downloaded successfully to {local_file_path}'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# download all the contents from a bucket
+def dump_bucket(bucket_url, local_folder):
+    # Parse the S3 URL to get the bucket name
+    parsed_url = urlparse(bucket_url)
+    bucket_name = parsed_url.netloc
+
+    # Create the S3 client with unsigned config for public access
+    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))
+
+    try:
+        # List all objects in the bucket
+        paginator = s3.get_paginator('list_objects_v2')
+        pages = paginator.paginate(Bucket=bucket_name)
+
+        for page in pages:
+            if 'Contents' in page:
+                for obj in page['Contents']:
+                    object_key = obj['Key']
+                    # Define the local file path where you want to save the file
+                    local_file_path = os.path.join(local_folder, object_key)
+
+                    # Ensure the local folder exists
+                    os.makedirs(os.path.dirname(local_file_path), exist_ok=True)
+
+                    # Download the file
+                    print(f"Downloading {object_key} from bucket {bucket_name} to {local_file_path}")
+                    s3.download_file(bucket_name, object_key, local_file_path)
+                    print(f"Download complete: {local_file_path}")
+    except Exception as e:
+        print(f"Error dumping bucket: {e}")
+        raise Exception(f"Error dumping bucket: {e}")
+
+@app.route('/aws-bucket-dump', methods=['POST'])
+def aws_bucket_dump():
+    try:
+        # Get bucket URL from the frontend (sent as JSON)
+        data = request.json
+        bucket_url = data.get('bucket_url')
+
+        if not bucket_url:
+            return jsonify({'error': 'Bucket URL is required'}), 400
+
+        # Define the local folder where you want to save all files
+        cwd = os.getcwd()
+        local_folder = os.path.join(cwd, 'aws_bucket_dump')
+
+        # Ensure the local folder exists
+        os.makedirs(local_folder, exist_ok=True)
+
+        # Dump the entire bucket
+        dump_bucket(bucket_url, local_folder)
+
+        return jsonify({'message': f'Bucket contents downloaded successfully to {local_folder}'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 
 @app.route('/read-files', methods=['POST'])
