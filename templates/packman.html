@@ -225,7 +225,8 @@
         .then(data => {
             if (data.message) {
                 alert(data.message);
-                addDataEntry('AWS S3 Bucket Dump', bucketUrl);
+                // Process the contents of the bucket and push to packData
+                fetchBucketDumpContents(bucketUrl);  // Function to handle reading files from the dump
                 form.reset();
                 disablePackName();
             } else if (data.error) {
@@ -235,6 +236,24 @@
         .catch(error => {
             console.error('Error:', error);
             alert('Failed to dump the bucket');
+        });
+    }
+
+    function fetchBucketDumpContents(bucketUrl) {
+        fetch(`/read-bucket-dump?bucket_url=${bucketUrl}`)
+        .then(response => response.json())
+        .then(data => {
+            data.files.forEach(file => {
+                packData.push({
+                    content: file.content,
+                    data_type: 'file',
+                    filename: file.filename
+                });
+                addDataEntry('AWS Bucket File', file.filename);
+            });
+        })
+        .catch(error => {
+            console.error('Error reading bucket dump contents:', error);
         });
     }
 
@@ -314,7 +333,6 @@
             return response.json();
         })
         .then(data => {
-            console.log('Response data:', data);
             if (data.message) {
                 alert(data.message);
             } else {
@@ -327,6 +345,8 @@
         });
     }
 </script>
+
+
 
 
 {% endblock %}

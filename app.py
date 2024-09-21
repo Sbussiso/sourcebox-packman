@@ -175,6 +175,49 @@ def aws_bucket_dump():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/read-bucket-dump', methods=['GET'])
+def read_bucket_dump():
+    # The local folder where the bucket contents were dumped
+    local_folder = os.path.join(os.getcwd(), 'aws_bucket_dump')
+    
+    allowed_file_extensions = [
+        '.txt', '.json', '.csv', '.py', '.js', '.html', '.css', '.md', '.xml', 
+        '.yaml', '.yml', '.ini', '.sh', '.bat', '.log', '.ts', '.jsx', '.tsx', 
+        '.cpp', '.c', '.h', '.java', '.rb', '.php', '.go', '.swift', '.rs', 
+        '.kt', '.pl', '.lua', '.r', '.m', '.scss', '.sass', '.less'
+    ]
+    
+    try:
+        if not os.path.exists(local_folder):
+            return jsonify({'error': 'No bucket dump found'}), 400
+        
+        file_contents = []
+        
+        # Traverse through the dumped files in the local folder
+        for root, dirs, files in os.walk(local_folder):
+            for file in files:
+                file_path = os.path.join(root, file)
+                if not file.endswith(tuple(allowed_file_extensions)):
+                    continue
+
+                # Read the file contents
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                    file_contents.append({
+                        'filename': file,
+                        'content': content
+                    })
+                except Exception as e:
+                    app.logger.error(f"Error reading file {file}: {str(e)}")
+                    return jsonify({'error': f"Failed to read {file}"}), 500
+
+        return jsonify({'files': file_contents}), 200
+
+    except Exception as e:
+        app.logger.error(f"Error reading bucket dump: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/read-files', methods=['POST'])
 def read_files():
