@@ -51,6 +51,37 @@ def check_authentication():
 
 
 
+# Utility function to check if user is premium
+def is_premium_user():
+    token = session.get('access_token')
+    if not token:
+        flash('You need to log in to access this feature.', 'danger')
+        return False
+
+    headers = {'Authorization': f'Bearer {token}'}
+    try:
+        # Fetch user ID
+        user_id_response = requests.get(f"{API_URL}/user/id", headers=headers)
+        if user_id_response.status_code == 200:
+            user_id = user_id_response.json().get('user_id')
+        else:
+            flash('Failed to retrieve user ID', 'danger')
+            return False
+
+        # Check if user is premium
+        premium_status_response = requests.get(f"{API_URL}/user/{user_id}/premium/status", headers=headers)
+        if premium_status_response.status_code == 200:
+            return premium_status_response.json().get('premium_status', False)
+        else:
+            flash('Failed to verify premium status', 'danger')
+            return False
+    except requests.RequestException as e:
+        logger.error(f"Error checking premium status: {e}")
+        flash('Error during premium status check.', 'danger')
+        return False
+
+
+
 def aws_download_single_file(s3_url, local_file_path):
     # Parse the S3 URL to get the bucket name and object key
     parsed_url = urlparse(s3_url)
@@ -96,6 +127,9 @@ def aws_download_single_file(bucket_url, local_file_path):
 
 @app.route('/aws-single-file', methods=['POST'])
 def aws_single_file():
+    if not is_premium_user():
+        return jsonify({'error': 'This feature is available to premium users only.'}), 403
+    
     try:
         # Get S3 URL from the user input (assumed to be passed as JSON)
         data = request.json
@@ -153,6 +187,9 @@ def dump_bucket(bucket_url, local_folder):
 
 @app.route('/aws-bucket-dump', methods=['POST'])
 def aws_bucket_dump():
+    if not is_premium_user():
+        return jsonify({'error': 'This feature is available to premium users only.'}), 403
+    
     try:
         # Get bucket URL from the frontend (sent as JSON)
         data = request.json
@@ -179,6 +216,10 @@ def aws_bucket_dump():
 
 @app.route('/read-bucket-dump', methods=['GET'])
 def read_bucket_dump():
+    
+    if not is_premium_user():
+        return jsonify({'error': 'This feature is available to premium users only.'}), 403
+    
     # The local folder where the bucket contents were dumped
     local_folder = os.path.join(os.getcwd(), 'aws_bucket_dump')
     
