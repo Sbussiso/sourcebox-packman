@@ -21,7 +21,7 @@ A pack is an organized package containing all of your uploaded data.
 - Dropbox (coming soon)
 - Google Drive (coming soon)
 
-## Best choice for standard data
+### Best choice for standard data
 
 ### Code Packs:
 
@@ -29,7 +29,7 @@ A pack is an organized package containing all of your uploaded data.
 - github projects
 - used in DeepQuery Code
 
-## Best choice for coding projects
+### Best choice for coding projects
 
 <br>
 <br>
