@@ -1,11 +1,11 @@
 ## PackMan - The SourceBox Package Manager
 
-Packman is the bridge between your data and AI
+Packman is the bridge between your data and AI. Upload local files, web content, AWS buckets, and more. Packman is the ultamite conection between your personalized data and esential to many sourcebox services.
 
 
 ## Packs
 
-A pack is an organized package containing your imported data.
+A pack is an organized package containing all of your uploaded data.
 
 - packs are passed to chat models to perform Retrieval Augmented Generation from your own personal data stored in packs
 
