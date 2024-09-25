@@ -38,7 +38,9 @@ A pack is an organized package containing all of your uploaded data.
 ## Data storage options
 
 ### Packman has many ways for you to import different kinds of data.
+
 <br/>
+
 ### Local Files and Webpages:
 - You can upload files from your local computer to packs.
 - Give a link to scrape and store web data in packs.
