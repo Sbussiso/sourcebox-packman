@@ -14,10 +14,10 @@ A pack is an organized package containing all of your uploaded data.
 - Code packs are storage boxes for code and code related files.
 
 ### Packs (regular):
-- local files
-- web content
-- aws files and buckets
-- used in DeepQuery
+- Local files
+- Web content
+- AWS files and buckets
+- Used in DeepQuery
 - Dropbox (coming soon)
 - Google Drive (coming soon)
 
@@ -25,9 +25,9 @@ A pack is an organized package containing all of your uploaded data.
 
 ### Code Packs:
 
-- local files
-- github projects
-- used in DeepQuery Code
+- Local files
+- Github projects
+- Used in DeepQuery Code
 
 ### Best choice for coding projects
 
