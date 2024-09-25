@@ -72,9 +72,9 @@ This is where you will review your added pack data to make sure it is what you w
 - Click "Publish to pack" when you are ready to publish and start using the pack
 
 ### Thats it you are ready to use your data accross the platform
-
-
-      
+<br>
+<br>
+<br>
 ## Getting into it with Code Pack Panel
 
 The code panel is where you actually add your pack data to put it to work on the platform.
