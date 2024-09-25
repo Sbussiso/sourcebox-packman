@@ -3,7 +3,6 @@
 Packman is the bridge between your data and AI. Upload local files, web content, AWS buckets, github projects and more. Packman is the ultamite conection between your personalized data and is esential to many sourcebox services.
 
 <br>
-<br>
 
 ## Packs
 
