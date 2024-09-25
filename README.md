@@ -61,8 +61,8 @@ This is where you choose the type of data you want to upload
 types:
 - local files
 - web content
-- aws files and buckets
-Make sure to click add data when you have the correct file or link you want to use. this will save the data for review.
+- aws files and buckets 
+- Note: Make sure to click add data when you have the correct file or link you want to use. this will save the data for review.
 
 ### step 3. Review your pack data. 
 
