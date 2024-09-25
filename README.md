@@ -62,7 +62,7 @@ types:
 - local files
 - web content
 - aws files and buckets 
-- Note: Make sure to click add data when you have the correct file or link you want to use. this will save the data for review.
+# Note: Make sure to click add data when you have the correct file or link you want to use. this will save the data for review.
 
 ### step 3. Review your pack data. 
 
