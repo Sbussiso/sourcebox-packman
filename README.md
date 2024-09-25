@@ -13,7 +13,7 @@ A pack is an organized package containing all of your uploaded data.
 - Regular packs are storage boxes for most common files.
 - Code packs are storage boxes for code and code related files.
 
-## Packs (regular):
+### Packs (regular):
 - local files
 - web content
 - aws files and buckets
@@ -23,7 +23,7 @@ A pack is an organized package containing all of your uploaded data.
 
 Best choice for standard data
 
-## Code Packs:
+### Code Packs:
 
 - local files
 - github projects
