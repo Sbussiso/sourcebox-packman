@@ -1,6 +1,6 @@
 ## PackMan - The SourceBox Package Manager
 
-Packman is the bridge between your data and AI. Upload local files, web content, AWS buckets, and more. Packman is the ultamite conection between your personalized data and is esential to many sourcebox services.
+Packman is the bridge between your data and AI. Upload local files, web content, AWS buckets, github projects and more. Packman is the ultamite conection between your personalized data and is esential to many sourcebox services.
 
 
 ## Packs
