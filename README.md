@@ -41,9 +41,9 @@ AWS:
 - You can upload individual files from any public AWS s3 bucket.
 - You can dump all files from any public AWS s3 bucket.
 
-## Getting into it
 
-Pack Panel:
+## Getting into it with Pack Panel
+
 
 The pack panel is where you actauly add your pack data to put it to work on the platform
 
@@ -66,6 +66,9 @@ This is where you will review your added pack data to make sure it is what you w
 - review data
 - click "Publish to pack" when you are ready to publish and start using the pack
 
+### Thats it you are ready to use your data accross the platform
+
+## Getting into it with Code Pack Panel
 
 
 
