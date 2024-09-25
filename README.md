@@ -7,8 +7,17 @@ Packman is the bridge between your data and AI. Upload local files, web content,
 
 A pack is an organized package containing all of your uploaded data.
 
-- packs are passed to chat models and vector storage to perform Retrieval Augmented Generation from your own personailized data stored in packs. 
+- packs are passed to chat models and vector storage to perform Retrieval Augmented Generation from your own personailized data stored in packs.
+- There are two kinds of packs on the SourceBox platform. Regular packs and code packs.
 
+Packs (regular):
+- local files
+- web content
+- aws files and buckets
+
+Code Packs:
+- local files
+- github projects
 
 ## Data storage options
 
