@@ -14,10 +14,17 @@ Packs (regular):
 - local files
 - web content
 - aws files and buckets
+- used in DeepQuery
+
+Best choice for standard data
 
 Code Packs:
+
 - local files
 - github projects
+- used in DeepQuery Code
+
+Best choice for coding projects
 
 ## Data storage options
 
