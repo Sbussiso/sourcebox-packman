@@ -59,21 +59,42 @@ This is required to identify your pack accross the platform and easily switch be
 
 This is where you choose the type of data you want to upload
 types:
-- local files
-- web content
-- aws files and buckets
+- Local Files
+- Web Content
+- AWS Files and Buckets
 
 ### Make sure to click add data when you have the correct file or link you want to use. this will save the data for review.
 
 ### step 3. Review your pack data. 
 
 This is where you will review your added pack data to make sure it is what you want before submitting the pack to the system
-- review data
-- click "Publish to pack" when you are ready to publish and start using the pack
+- Review data
+- Click "Publish to pack" when you are ready to publish and start using the pack
 
 ### Thats it you are ready to use your data accross the platform
 
 ## Getting into it with Code Pack Panel
 
+The code panel is where you actually add your pack data to put it to work on the platform.
 
+### step 1. Name your code pack. 
 
+This is required to identify your pack accross the platform and easily switch between them
+
+### step 2. Choose your data type.
+
+This is where you choose the type of data you want to upload
+types:
+- Github Codebase
+- Code Files
+- Common Files
+
+### Make sure to click add data when you have the correct file or link you want to use. this will save the data for review.
+
+### step 3. Review your code pack data. 
+
+This is where you will review your added pack data to make sure it is what you want before submitting the pack to the system
+- Review data
+- Click "Publish to pack" when you are ready to publish and start using the pack
+
+### Thats it you are ready to use your data accross the platform
