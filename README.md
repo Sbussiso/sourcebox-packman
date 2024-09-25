@@ -34,6 +34,9 @@ Local Files and Webpages:
 - You can upload files from your local computer to packs.
 - Give a link to scrape and store web data in packs.
 
+Github Projects:
+- you can upload entire github projects with nothing but the public url
+
 AWS:
 - You can upload individual files from any public AWS s3 bucket.
 - You can dump all files from any public AWS s3 bucket.
