@@ -17,6 +17,8 @@ Packs (regular):
 - web content
 - aws files and buckets
 - used in DeepQuery
+- Dropbox (coming soon)
+- Google Drive (coming soon)
 
 Best choice for standard data
 
