@@ -129,6 +129,8 @@ types:
 
 > ### Make sure to click add data when you have the correct file or link you want to use. this will save the data for review.
 
+<br/>
+
 ### step 3. Review your code pack data. 
 
 > This is where you will review your added pack data to make sure it is what you want before submitting the pack to the system
