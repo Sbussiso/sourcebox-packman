@@ -41,7 +41,7 @@
 
 ## Data storage options
 
-### Packman has many ways for you to import different kinds of data.
+> Packman has many ways for you to import different kinds of data.
 
 <br/>
 
@@ -62,29 +62,39 @@
 ## Getting into it with Pack Panel
 
 
-The pack panel is where you actauly add your pack data to put it to work on the platform
+> The pack panel is where you actauly add your pack data to put it to work on the platform
+
+<br/>
 
 ### step 1. Name your pack. 
 
-This is required to identify your pack accross the platform and easily switch between them
+> This is required to identify your pack accross the platform and easily switch between them
+
+<br/>
 
 ### step 2. Choose your data type.
 
-This is where you choose the type of data you want to upload
+> This is where you choose the type of data you want to upload
+
+<br/>
+
 types:
 - Local Files
 - Web Content
 - AWS Files and Buckets
 
-### Make sure to click add data when you have the correct file or link you want to use. this will save the data for review.
+> ### Make sure to click add data when you have the correct file or link you want to use. this will save the data for review.
 
 ### step 3. Review your pack data. 
 
-This is where you will review your added pack data to make sure it is what you want before submitting the pack to the system
+> This is where you will review your added pack data to make sure it is what you want before submitting the pack to the system
+
+<br/>
+
 - Review data
 - Click "Publish to pack" when you are ready to publish and start using the pack
 
-### Thats it you are ready to use your data accross the platform
+> ### Thats it you are ready to use your data accross the platform
 <br>
 <br>
 <br>
@@ -92,26 +102,36 @@ This is where you will review your added pack data to make sure it is what you w
 
 ## Getting into it with Code Pack Panel
 
-The code panel is where you actually add your pack data to put it to work on the platform.
+> The code panel is where you actually add your pack data to put it to work on the platform.
+
+<br/>
 
 ### step 1. Name your code pack. 
 
-This is required to identify your pack accross the platform and easily switch between them
+> This is required to identify your pack accross the platform and easily switch between them
+
+<br/>
 
 ### step 2. Choose your data type.
 
-This is where you choose the type of data you want to upload
+> This is where you choose the type of data you want to upload
+
+<br/>
+
 types:
 - Github Codebase
 - Code Files
 - Common Files
 
-### Make sure to click add data when you have the correct file or link you want to use. this will save the data for review.
+> ### Make sure to click add data when you have the correct file or link you want to use. this will save the data for review.
 
 ### step 3. Review your code pack data. 
 
-This is where you will review your added pack data to make sure it is what you want before submitting the pack to the system
+> This is where you will review your added pack data to make sure it is what you want before submitting the pack to the system
+
+<br/>
+
 - Review data
 - Click "Publish to pack" when you are ready to publish and start using the pack
 
-### Thats it you are ready to use your data accross the platform
+> ### Thats it you are ready to use your data accross the platform
