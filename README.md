@@ -8,7 +8,7 @@
 
 ## Packs
 
-A pack is an organized package containing all of your uploaded data.
+> A pack is an organized package containing all of your uploaded data.
 
 - Packs are passed to chat models and vector storage to perform Retrieval Augmented Generation from your own personailized data stored in packs.
 - There are two kinds of packs on the SourceBox platform, regular packs and code packs.
@@ -32,7 +32,7 @@ A pack is an organized package containing all of your uploaded data.
 - Github projects
 - Used in DeepQuery Code
 
-### Best choice for coding projects
+> ### Best choice for coding projects
 
 <br>
 <br>
