@@ -10,6 +10,8 @@
 
 > A pack is an organized package containing all of your uploaded data.
 
+<br/>
+
 - Packs are passed to chat models and vector storage to perform Retrieval Augmented Generation from your own personailized data stored in packs.
 - There are two kinds of packs on the SourceBox platform, regular packs and code packs.
 - Regular packs are storage boxes for most common files.
