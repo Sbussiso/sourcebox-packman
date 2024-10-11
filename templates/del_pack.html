@@ -3,51 +3,102 @@
 {% block title %}Delete Packs and Code Packs{% endblock %}
 
 {% block content %}
-<h1 class="my-4">Delete Packs and Code Packs</h1>
+<h1 class="my-4 text-center shadow-text">Delete Packs and Code Packs</h1>
 
 {% if 'access_token' not in session %}
-    <a href="{{ url_for('register') }}" class="btn btn-primary">Register</a>
-    <a href="{{ url_for('login') }}" class="btn btn-secondary">Login</a>
+    <div class="text-center">
+        <a href="{{ url_for('register') }}" class="btn btn-primary">Register</a>
+        <a href="{{ url_for('login') }}" class="btn btn-secondary">Login</a>
+    </div>
 {% endif %}
 
 {% if 'access_token' in session %}
     <div class="container">
         <br/>
-        <h2>Available Packs</h2>
+        <div class="row justify-content-center">
+            <div class="col-md-5">
+                <h2 class="text-center shadow-text">Available Packs</h2>
+                <br/>
+                {% if packs %}
+                    <ul class="list-group">
+                        {% for pack in packs %}
+                            <li class="list-group-item">
+                                <strong>{{ pack.pack_name }}</strong>
+                                <button class="btn btn-danger btn-sm float-end" onclick="confirmDelete('pack', '{{ pack.id }}')">Delete</button>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-center">No packs available.</p>
+                {% endif %}
+            </div>
+            <div class="col-md-5">
+                <h2 class="text-center shadow-text">Available Code Packs</h2>
+                <br/>
+                {% if code_packs %}
+                    <ul class="list-group">
+                        {% for code_pack in code_packs %}
+                            <li class="list-group-item">
+                                <strong>{{ code_pack.pack_name }}</strong>
+                                <button class="btn btn-danger btn-sm float-end" onclick="confirmDelete('code_pack', '{{ code_pack.id }}')">Delete</button>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-center">No code packs available.</p>
+                {% endif %}
+            </div>
+        </div>
         <br/>
-        {% if packs %}
-            <ul class="list-group">
-                {% for pack in packs %}
-                    <li class="list-group-item">
-                        <strong>{{ pack.pack_name }}</strong>
-                        <button class="btn btn-danger btn-sm float-end" onclick="deletePack('{{ pack.id }}')">Delete</button>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>No packs available.</p>
-        {% endif %}
+        <div class="row">
+            <div class="col-md-12 text-center">
+                <a href="/" class="btn btn-primary btn-lg w-50 mt-5">Back to Home</a>
+            </div>
+        </div>
         <br/>
-        <h2>Available Code Packs</h2>
-        <br/>
-        {% if code_packs %}
-            <ul class="list-group">
-                {% for code_pack in code_packs %}
-                    <li class="list-group-item">
-                        <strong>{{ code_pack.pack_name }}</strong>
-                        <button class="btn btn-danger btn-sm float-end" onclick="deleteCodePack('{{ code_pack.id }}')">Delete</button>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>No code packs available.</p>
-        {% endif %}
-        <br/>
-        <a href="/" class="btn btn-primary">Back to Home</a>
     </div>
 {% endif %}
 
+<!-- Modal -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmDeleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this pack? This action is permanent.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Nevermind</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteButton">Yes, Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+    let deleteType = '';
+    let deleteId = '';
+
+    function confirmDelete(type, id) {
+        deleteType = type;
+        deleteId = id;
+        const modal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+        modal.show();
+    }
+
+    document.getElementById('confirmDeleteButton').addEventListener('click', function() {
+        if (deleteType === 'pack') {
+            deletePack(deleteId);
+        } else if (deleteType === 'code_pack') {
+            deleteCodePack(deleteId);
+        }
+        const modal = bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal'));
+        modal.hide();
+    });
+
     function deletePack(packId) {
         const token = sessionStorage.getItem('access_token');
         fetch(`/delete_pack/${packId}`, {

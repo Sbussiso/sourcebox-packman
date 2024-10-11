@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 from botocore import UNSIGNED
 from botocore.client import Config
 import PyPDF2
+import time
 
 load_dotenv()
 
@@ -513,17 +514,24 @@ def fetch_repo():
         logging.debug(f"REPO URL: {repo_url}")
 
         if not repo_url:
+            logging.error("No repository URL provided.")
             return jsonify({"error": "No repository URL provided"}), 400
 
         try:
+            logging.info(f"Attempting to clone repository from URL: {repo_url}")
             repo = Repo.clone_from(repo_url, repo_fetch_dir)
-            logging.debug("Pulled repo from GitHub")
+            logging.info("Repository successfully cloned.")
         except Exception as e:
             logging.error(f"Failed to fetch repository: {e}")
             return jsonify({"error": str(e)}), 500
 
-        files = get_files_in_repofetch()
-        return jsonify({"message": "Repository successfully fetched", "files": files}), 200
+        try:
+            files = get_files_in_repofetch()
+            logging.debug(f"Files in 'repofetch': {files}")
+            return jsonify({"message": "Repository successfully fetched", "files": files}), 200
+        except Exception as e:
+            logging.error(f"Error retrieving files from 'repofetch': {e}")
+            return jsonify({"error": str(e)}), 500
 
     except Exception as e:
         logging.error(f"Server Error: {e}")
@@ -533,32 +541,47 @@ def fetch_repo():
 @app.route('/clear-repo', methods=['POST'])
 def clear_repo():
     try:
-        # Define the path to the directory
         repo_directory_path = 'repofetch'
         deeplake_directory_path = 'my_deeplake'
 
-        # Check if the repo directory exists
+        logging.debug("Starting clear_repo function")
+
+        # Attempt to delete the repo directory
         if os.path.exists(repo_directory_path) and os.path.isdir(repo_directory_path):
-            logging.debug(f"The directory '{repo_directory_path}' exists. deleting folder")
-            shutil.rmtree(repo_directory_path)
-            logging.debug(f"Directory 'repofetch' deleted")
-        else:
-            logging.debug(f"The directory '{repo_directory_path}' does not exist. No folder to delete")
+            logging.debug(f"Attempting to delete directory '{repo_directory_path}'")
+            for _ in range(3):  # Retry up to 3 times
+                try:
+                    shutil.rmtree(repo_directory_path)
+                    logging.debug(f"Directory '{repo_directory_path}' deleted successfully")
+                    break
+                except Exception as e:
+                    logging.error(f"Failed to delete directory '{repo_directory_path}': {e}")
+                    time.sleep(1)  # Wait before retrying
+            else:
+                return jsonify({"error": f"Failed to delete directory '{repo_directory_path}' after retries"}), 500
 
-        # Check if the my_deeplake directory exists
+        # Attempt to delete the deeplake directory
         if os.path.exists(deeplake_directory_path) and os.path.isdir(deeplake_directory_path):
-            logging.debug(f"The directory '{deeplake_directory_path}' exists. deleting folder")
-            shutil.rmtree(deeplake_directory_path)
-            logging.debug(f"Directory 'my_deeplake' deleted")
-        else:
-            logging.debug(f"The directory '{deeplake_directory_path}' does not exist. No folder to delete")
+            logging.debug(f"Attempting to delete directory '{deeplake_directory_path}'")
+            try:
+                shutil.rmtree(deeplake_directory_path)
+                logging.debug(f"Directory '{deeplake_directory_path}' deleted successfully")
+            except Exception as e:
+                logging.error(f"Failed to delete directory '{deeplake_directory_path}': {e}")
+                return jsonify({"error": f"Failed to delete directory '{deeplake_directory_path}': {e}"}), 500
 
-        # delete processed files metadata
+        # Delete processed files metadata
         main_directory = os.getcwd()
         file = os.path.join(main_directory, 'processed_files_metadata.json')
         if os.path.exists(file):
-            os.remove(file)
+            try:
+                os.remove(file)
+                logging.debug(f"File 'processed_files_metadata.json' deleted successfully")
+            except Exception as e:
+                logging.error(f"Failed to delete file 'processed_files_metadata.json': {e}")
+                return jsonify({"error": f"Failed to delete file 'processed_files_metadata.json': {e}"}), 500
 
+        logging.debug("clear_repo function completed successfully")
         return jsonify({"message": "Directory cleared"}), 200
     except Exception as e:
         logging.error(f"Server Error: {e}")
